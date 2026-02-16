@@ -1,0 +1,36 @@
+package com.kylsolutions.hitc.database
+
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+
+@Database(
+    entities = [Conversation::class, Message::class],
+    version = 1,
+    exportSchema = false
+)
+abstract class ConversationDatabase : RoomDatabase() {
+
+    abstract fun conversationDao(): ConversationDao
+    abstract fun messageDao(): MessageDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: ConversationDatabase? = null
+
+        fun getInstance(context: Context): ConversationDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    ConversationDatabase::class.java,
+                    "hitc_conversations.db"
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+}

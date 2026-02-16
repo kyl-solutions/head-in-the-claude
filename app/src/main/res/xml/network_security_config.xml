@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext HTTP to relay server (LAN + Tailscale) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.1.15</domain>
+        <domain includeSubdomains="false">100.90.48.63</domain>
+    </domain-config>
+</network-security-config>

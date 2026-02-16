@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.HeadInTheCloud" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/claude_orange</item>
+        <item name="colorPrimaryVariant">@color/claude_orange_dim</item>
+        <item name="colorOnPrimary">@color/text_on_orange</item>
+        <item name="colorSecondary">@color/claude_orange_light</item>
+        <item name="colorSecondaryVariant">@color/claude_orange_dim</item>
+        <item name="colorOnSecondary">@color/text_on_orange</item>
+        <item name="android:statusBarColor">@color/bg_dark</item>
+        <item name="android:navigationBarColor">@color/bg_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

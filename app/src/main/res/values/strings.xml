@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Head-In-The-Claude</string>
+    <string name="connect_to_imac">Connect to iMac</string>
+    <string name="connect_to_claude">Connect to Claude</string>
+    <string name="connected">Connected</string>
+    <string name="new_session">New Session</string>
+    <string name="terminal_welcome">Head-In-The-Claude\nMobile Claude Code Interface\n\nTap Connect to begin.\n</string>
+    <string name="command_hint">Ask Claude anything…</string>
+    <string name="send">Send</string>
+    <string name="capture_screenshot">Capture Screenshot</string>
+    <string name="screenshot_saved">Screenshot saved: %1$s</string>
+    <string name="screenshot_sent">Screenshot sent to conversation</string>
+
+    <!-- Connection badge -->
+    <string name="badge_relay">RELAY</string>
+    <string name="badge_direct">DIRECT</string>
+
+    <!-- Shortcut labels + prompts -->
+    <string name="shortcut_ls">ls</string>
+    <string name="shortcut_git">git status</string>
+    <string name="shortcut_read">read file</string>
+    <string name="shortcut_test">run tests</string>
+    <string name="shortcut_explain">explain</string>
+    <string name="shortcut_fix">fix</string>
+    <string name="shortcut_refactor">refactor</string>
+    <string name="shortcut_summarize">summarize</string>
+</resources>
