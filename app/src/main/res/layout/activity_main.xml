@@ -54,14 +54,17 @@
             android:id="@+id/newSessionButton"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_height="36dp"
+            android:minWidth="0dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:text="@string/new_session"
             android:textSize="11sp"
             android:textColor="@color/claude_orange"
             android:fontFamily="@font/jetbrains_mono"
             android:visibility="gone"
             app:strokeColor="@color/claude_orange_dim"
-            app:cornerRadius="16dp" />
+            app:cornerRadius="18dp" />
 
     </LinearLayout>
 
@@ -188,8 +191,11 @@
         <!-- Send Button -->
         <Button
             android:id="@+id/sendButton"
-            android:layout_width="56dp"
+            android:layout_width="wrap_content"
             android:layout_height="40dp"
+            android:minWidth="64dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:text="@string/send"
             android:enabled="false"
             android:backgroundTint="@color/claude_orange"

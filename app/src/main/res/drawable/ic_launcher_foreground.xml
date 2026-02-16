@@ -4,11 +4,55 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Terminal bracket: >_ -->
+
+    <!-- hit(C) logo - elegant programming aesthetic -->
+
+    <!-- "h" letter - warm white -->
     <path
-        android:fillColor="#00FF00"
-        android:pathData="M32,40 L50,54 L32,68 L36,72 L58,54 L36,36 Z" />
+        android:fillColor="#F0E6D8"
+        android:pathData="M24,42 L24,66 L27,66 L27,55 L27,55 C27,51 30,48 34,48 L34,66 L37,66 L37,48 C37,44 34,42 30,42 L24,42 Z" />
+
+    <!-- "i" letter with dot - warm white -->
     <path
-        android:fillColor="#00FF00"
-        android:pathData="M60,66 L78,66 L78,72 L60,72 Z" />
+        android:fillColor="#F0E6D8"
+        android:pathData="M41,48 L41,66 L44,66 L44,48 L41,48 Z" />
+    <path
+        android:fillColor="#F0E6D8"
+        android:pathData="M41,42 L44,42 L44,45 L41,45 Z" />
+
+    <!-- "t" letter - warm white -->
+    <path
+        android:fillColor="#F0E6D8"
+        android:pathData="M48,44 L48,48 L46,48 L46,51 L48,51 L48,63 C48,65 50,66 52,66 L54,66 L54,63 L52,63 C51,63 51,62.5 51,62 L51,51 L54,51 L54,48 L51,48 L51,44 L48,44 Z" />
+
+    <!-- "(" bracket - Claude orange -->
+    <path
+        android:fillColor="#E87B35"
+        android:pathData="M58,42 C55,46 54,50 54,54 C54,58 55,62 58,66 L61,66 C58,62 57,58 57,54 C57,50 58,46 61,42 L58,42 Z" />
+
+    <!-- "C" letter - Claude orange with circular accent -->
+    <path
+        android:fillColor="#E87B35"
+        android:pathData="M72,46 C67,46 63,50 63,54 C63,58 67,62 72,62 C75,62 78,60.5 79,58 L76,57 C75.5,58.5 74,60 72,60 C69,60 66,57.5 66,54 C66,50.5 69,48 72,48 C74,48 75.5,49.5 76,51 L79,50 C78,47.5 75,46 72,46 Z" />
+
+    <!-- Circular accent around C -->
+    <path
+        android:fillColor="#E87B35"
+        android:strokeColor="#E87B35"
+        android:strokeWidth="1.5"
+        android:pathData="M72,43 A11,11 0 0 1 83,54"
+        android:fillAlpha="0"
+        android:strokeAlpha="0.8" />
+    <path
+        android:fillColor="#E87B35"
+        android:strokeColor="#E87B35"
+        android:strokeWidth="1.5"
+        android:pathData="M72,65 A11,11 0 0 1 61,54"
+        android:fillAlpha="0"
+        android:strokeAlpha="0.8" />
+
+    <!-- ")" bracket - Claude orange -->
+    <path
+        android:fillColor="#E87B35"
+        android:pathData="M83,42 L86,42 C83,46 82,50 82,54 C82,58 83,62 86,66 L83,66 C80,62 79,58 79,54 C79,50 80,46 83,42 Z" />
 </vector>

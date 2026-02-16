@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Head-In-The-Claude</string>
+    <string name="app_name">hit(C)</string>
+    <string name="app_name_full">Head-In-The-Claude</string>
     <string name="connect_to_imac">Connect to iMac</string>
     <string name="connect_to_claude">Connect to Claude</string>
     <string name="connected">Connected</string>
     <string name="new_session">New Session</string>
-    <string name="terminal_welcome">Head-In-The-Claude\nMobile Claude Code Interface\n\nTap Connect to begin.\n</string>
+    <string name="terminal_welcome">hit(C)\nMobile Claude Code Interface\n\nTap Connect to begin.\n</string>
     <string name="command_hint">Ask Claude anything…</string>
     <string name="send">Send</string>
     <string name="capture_screenshot">Capture Screenshot</string>

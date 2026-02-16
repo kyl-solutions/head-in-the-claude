@@ -30,9 +30,14 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
+import android.util.Log
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "HitC"
+    }
 
     // Views
     private lateinit var terminalOutput: TextView
@@ -226,28 +231,97 @@ class MainActivity : AppCompatActivity() {
             if (!isStreaming) sendMessage()
             true
         }
+
+        // Long-press on connection badge to toggle relay/direct mode
+        connectionBadge.setOnLongClickListener { v ->
+            if (isStreaming) {
+                Log.w(TAG, "Mode toggle blocked: streaming in progress")
+                Toast.makeText(this, "Cannot switch mode while streaming", Toast.LENGTH_SHORT).show()
+                return@setOnLongClickListener true
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            } else {
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            }
+
+            toggleConnectionMode()
+            true
+        }
+    }
+
+    private fun toggleConnectionMode() {
+        val previousMode = if (useRelay) "relay" else "direct"
+        val newMode = if (useRelay) "direct" else "relay"
+
+        Log.i(TAG, "Toggling connection mode: $previousMode → $newMode")
+
+        if (useRelay) {
+            // Switching to direct mode
+            Log.d(TAG, "Switching to direct API mode")
+            useRelay = false
+            showBadge(relay = false)
+            appendColoredOutput("\n⚡ Switched to DIRECT mode (chat only, no Mac tools)\n\n", colorOrange)
+
+            // Initialize direct conversation if needed
+            if (currentConversationId == null) {
+                Log.d(TAG, "No active conversation, creating new one for direct mode")
+                loadOrCreateConversation()
+            }
+        } else {
+            // Switching to relay mode - attempt connection
+            Log.d(TAG, "Attempting to switch to relay mode")
+            appendColoredOutput("\n⚡ Attempting to switch to RELAY mode...\n", colorOrange)
+
+            lifecycleScope.launch {
+                try {
+                    val client = RelayClient(relaySessionMgr.relayUrl, relaySessionMgr.authToken)
+                    val healthy = client.healthCheck()
+
+                    if (healthy) {
+                        relayClient = client
+                        useRelay = true
+                        showBadge(relay = true)
+                        Log.i(TAG, "Successfully switched to relay mode")
+                        appendColoredOutput("✓ Switched to RELAY mode (full tool access)\n\n", colorGreen)
+                    } else {
+                        Log.e(TAG, "Relay health check failed - staying in direct mode")
+                        appendColoredOutput("✗ Relay not available - staying in DIRECT mode\n\n", colorRed)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to connect to relay: ${e.message}", e)
+                    appendColoredOutput("✗ Relay error: ${e.message}\n  Staying in DIRECT mode\n\n", colorRed)
+                }
+            }
+        }
     }
 
     // ─── Connect ────────────────────────────────────────────────
 
     private fun connectToRelay() {
         lifecycleScope.launch {
+            Log.i(TAG, "Initiating connection to relay at ${relaySessionMgr.relayUrl}")
             appendColoredOutput("Connecting to Claude relay...\n", colorPrimary)
             connectButton.isEnabled = false
 
             try {
                 val client = RelayClient(relaySessionMgr.relayUrl, relaySessionMgr.authToken)
+                Log.d(TAG, "RelayClient created, performing health check...")
                 val healthy = client.healthCheck()
 
                 if (healthy) {
                     relayClient = client
                     useRelay = true
+                    Log.i(TAG, "Relay connection successful")
                     appendColoredOutput("✓ Connected to Claude (relay — full tool access)\n\n", colorGreen)
                     showBadge(relay = true)
                 } else {
+                    Log.w(TAG, "Relay health check returned false")
                     fallbackToDirect("Relay not reachable")
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "Relay connection failed: ${e.message}", e)
                 fallbackToDirect(e.message ?: "Connection failed")
             }
 
@@ -266,6 +340,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fallbackToDirect(reason: String) {
+        Log.w(TAG, "Falling back to direct API mode: $reason")
         appendColoredOutput("  ⚠ Relay unavailable ($reason)\n", colorOrange)
         appendColoredOutput("  → Using direct API (chat only, no Mac tools)\n\n", colorPrimary)
         useRelay = false
@@ -339,19 +414,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendViaRelay(message: String) {
         val client = relayClient ?: run {
+            Log.e(TAG, "sendViaRelay called but relayClient is null")
             appendColoredOutput("✗ Relay client not initialized\n", colorRed)
             setStreamingState(false)
             return
         }
 
+        Log.d(TAG, "Sending message via relay, session=${relaySessionMgr.currentSessionId}")
         activeJob = lifecycleScope.launch {
             client.sendMessage(relaySessionMgr.currentSessionId, message)
                 .flowOn(Dispatchers.IO)
                 .onCompletion {
+                    Log.d(TAG, "Relay message stream completed")
                     finalizeResponse()
                     setStreamingState(false)
                 }
                 .catch { e ->
+                    Log.e(TAG, "Relay message error: ${e.message}", e)
                     appendColoredOutput("\n✗ Error: ${e.message}\n", colorRed)
                     setStreamingState(false)
                 }
@@ -361,26 +440,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendViaDirect(message: String) {
         val client = claudeClient ?: run {
+            Log.e(TAG, "sendViaDirect called but claudeClient is null")
             Toast.makeText(this, "Claude client not initialized", Toast.LENGTH_SHORT).show()
             setStreamingState(false)
             return
         }
 
         val conversationId = currentConversationId ?: run {
+            Log.e(TAG, "sendViaDirect called but currentConversationId is null")
             Toast.makeText(this, "No active conversation", Toast.LENGTH_SHORT).show()
             setStreamingState(false)
             return
         }
 
+        Log.d(TAG, "Sending message via direct API, conversation=$conversationId")
         activeJob = lifecycleScope.launch {
             try {
                 sessionRepo.addUserMessage(conversationId, message)
                 val history = sessionRepo.getMessageHistory(conversationId)
+                Log.d(TAG, "Message history count: ${history.size}")
                 assistantResponseBuffer.clear()
 
                 client.sendMessage(history)
                     .flowOn(Dispatchers.IO)
                     .onCompletion {
+                        Log.d(TAG, "Direct API message stream completed")
                         if (assistantResponseBuffer.isNotEmpty()) {
                             sessionRepo.addAssistantMessage(
                                 conversationId,
@@ -391,11 +475,13 @@ class MainActivity : AppCompatActivity() {
                         setStreamingState(false)
                     }
                     .catch { e ->
+                        Log.e(TAG, "Direct API message error: ${e.message}", e)
                         appendColoredOutput("\n✗ Error: ${e.message}\n", colorRed)
                         setStreamingState(false)
                     }
                     .collect { event -> handleClaudeEvent(event) }
             } catch (e: Exception) {
+                Log.e(TAG, "Direct API exception: ${e.message}", e)
                 appendColoredOutput("\n✗ Error: ${e.message}\n", colorRed)
                 setStreamingState(false)
             }
