@@ -46,6 +46,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Translate Activity (Zulu/Sesotho) -->
+        <activity
+            android:name=".TranslateActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- FileProvider for camera image capture -->
         <provider
             android:name="androidx.core.content.FileProvider"

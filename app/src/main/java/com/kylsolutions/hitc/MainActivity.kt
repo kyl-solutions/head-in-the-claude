@@ -87,7 +87,9 @@ class MainActivity : AppCompatActivity() {
         "explain" to "Explain the code I'm looking at",
         "fix" to "Fix the issue in the current code",
         "refactor" to "Refactor this code for clarity and performance",
-        "summarize" to "Summarize what this project does"
+        "summarize" to "Summarize what this project does",
+        "🌐 Zulu" to "TRANSLATE_ZULU:",
+        "🌐 Sotho" to "TRANSLATE_SESOTHO:"
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -191,6 +193,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleShortcut(label: String, prompt: String) {
         if (isStreaming) return
+
+        // Translation shortcuts → launch TranslateActivity
+        if (prompt.startsWith("TRANSLATE_")) {
+            val targetLang = prompt.removePrefix("TRANSLATE_").removeSuffix(":")
+            val intent = Intent(this, TranslateActivity::class.java).apply {
+                putExtra(TranslateActivity.EXTRA_TARGET_LANGUAGE, targetLang)
+            }
+            startActivity(intent)
+            return
+        }
 
         // "read file" is a prefix — user types the path
         if (prompt.endsWith(" ")) {
