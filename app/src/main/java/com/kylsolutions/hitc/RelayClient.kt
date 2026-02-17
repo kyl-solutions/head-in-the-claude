@@ -1,5 +1,6 @@
 package com.kylsolutions.hitc
 
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,9 @@ import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import java.io.File
+import java.io.IOException
+import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 /**
@@ -24,10 +28,16 @@ class RelayClient(
     private val baseUrl: String,
     private val authToken: String
 ) {
+    companion object {
+        private const val TAG = "RelayClient"
+    }
+
     private val client = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(300, TimeUnit.SECONDS)   // Claude responses can be long
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(0, TimeUnit.SECONDS)     // SSE streams are indefinite — no read timeout
         .writeTimeout(60, TimeUnit.SECONDS)
+        .pingInterval(20, TimeUnit.SECONDS)   // TCP-level keepalive every 20s
+        .retryOnConnectionFailure(true)
         .build()
 
     private val gson = Gson()
@@ -50,17 +60,37 @@ class RelayClient(
             .build()
 
         activeEventSource = sseFactory.newEventSource(request, object : EventSourceListener() {
+            override fun onOpen(es: EventSource, response: Response) {
+                Log.i(TAG, "SSE stream opened")
+            }
+
             override fun onEvent(es: EventSource, id: String?, type: String?, data: String) {
                 val event = parseEvent(type, data)
                 trySend(event)
             }
 
             override fun onFailure(es: EventSource, t: Throwable?, response: Response?) {
-                trySend(RelayEvent.Error(t?.message ?: "Connection failed (${response?.code ?: "unknown"})"))
+                val errorMsg = when {
+                    t is SocketTimeoutException -> "Connection timed out — relay may be unreachable"
+                    t is SocketException -> "Connection lost — network may have changed"
+                    t is IOException && t.message?.contains("canceled") == true -> {
+                        // Normal cancellation (abort, new session) — not a real error
+                        Log.d(TAG, "SSE stream cancelled (normal)")
+                        close()
+                        return
+                    }
+                    response?.code == 409 -> "Session busy — another request is active"
+                    response != null -> "Server error (${response.code})"
+                    t != null -> t.message ?: "Connection failed"
+                    else -> "Connection failed (unknown)"
+                }
+                Log.w(TAG, "SSE failure: $errorMsg", t)
+                trySend(RelayEvent.Error(errorMsg))
                 close()
             }
 
             override fun onClosed(es: EventSource) {
+                Log.d(TAG, "SSE stream closed normally")
                 close()
             }
         })
@@ -91,16 +121,35 @@ class RelayClient(
             .build()
 
         activeEventSource = sseFactory.newEventSource(request, object : EventSourceListener() {
+            override fun onOpen(es: EventSource, response: Response) {
+                Log.i(TAG, "SSE image stream opened")
+            }
+
             override fun onEvent(es: EventSource, id: String?, type: String?, data: String) {
                 trySend(parseEvent(type, data))
             }
 
             override fun onFailure(es: EventSource, t: Throwable?, response: Response?) {
-                trySend(RelayEvent.Error(t?.message ?: "Connection failed"))
+                val errorMsg = when {
+                    t is SocketTimeoutException -> "Connection timed out — relay may be unreachable"
+                    t is SocketException -> "Connection lost — network may have changed"
+                    t is IOException && t.message?.contains("canceled") == true -> {
+                        Log.d(TAG, "SSE image stream cancelled (normal)")
+                        close()
+                        return
+                    }
+                    response?.code == 409 -> "Session busy — another request is active"
+                    response != null -> "Server error (${response.code})"
+                    t != null -> t.message ?: "Connection failed"
+                    else -> "Connection failed (unknown)"
+                }
+                Log.w(TAG, "SSE image failure: $errorMsg", t)
+                trySend(RelayEvent.Error(errorMsg))
                 close()
             }
 
             override fun onClosed(es: EventSource) {
+                Log.d(TAG, "SSE image stream closed normally")
                 close()
             }
         })

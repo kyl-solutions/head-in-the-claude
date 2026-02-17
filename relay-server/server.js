@@ -51,14 +51,21 @@ app.post('/api/chat', authMiddleware, async (c) => {
 
   sessionManager.recordMessage(session.id);
 
-  // Stream response as SSE
+  // Stream response as SSE with heartbeat keepalive
   let streamChild = null;
+  let heartbeatTimer = null;
+  let processTimer = null;
+  let streamClosed = false;
+
+  const HEARTBEAT_MS = 15_000;    // ping every 15s to keep connection alive
+  const PROCESS_TIMEOUT_MS = 600_000; // kill hung Claude after 10 minutes
 
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder();
 
       const sendEvent = (type, data) => {
+        if (streamClosed) return;
         try {
           controller.enqueue(encoder.encode(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`));
         } catch (e) {
@@ -66,11 +73,40 @@ app.post('/api/chat', authMiddleware, async (c) => {
         }
       };
 
-      // Cleanup helper — guarantees both state systems are cleared
-      const cleanup = () => {
+      const sendHeartbeat = () => {
+        if (streamClosed) return;
+        try {
+          // SSE comment line — keeps connection alive, clients ignore it
+          controller.enqueue(encoder.encode(': heartbeat\n\n'));
+        } catch (e) {
+          // Stream closed, stop heartbeat
+          clearTimers();
+        }
+      };
+
+      const clearTimers = () => {
+        if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+        if (processTimer) { clearTimeout(processTimer); processTimer = null; }
+      };
+
+      const closeStream = () => {
+        if (streamClosed) return;
+        streamClosed = true;
+        clearTimers();
+        try { controller.close(); } catch (e) { /* already closed */ }
+      };
+
+      // Start heartbeat — fires every 15s to prevent network timeouts
+      heartbeatTimer = setInterval(sendHeartbeat, HEARTBEAT_MS);
+
+      // Process timeout — kill Claude if it hangs beyond 10 minutes
+      processTimer = setTimeout(() => {
+        console.warn(`[relay] Session ${session.id}: Claude process timed out after ${PROCESS_TIMEOUT_MS / 1000}s`);
         claudeBridge.abort(session.id);
         sessionManager.clearActiveProcess(session.id);
-      };
+        sendEvent('error', { message: 'Request timed out (10 min limit)' });
+        closeStream();
+      }, PROCESS_TIMEOUT_MS);
 
       // Send session info first
       sendEvent('session', { sessionId: session.id, isNew: session.isNew });
@@ -91,12 +127,12 @@ app.post('/api/chat', authMiddleware, async (c) => {
         onComplete: (result) => {
           sessionManager.clearActiveProcess(session.id);
           sendEvent('done', { sessionId: session.id });
-          try { controller.close(); } catch (e) { /* already closed */ }
+          closeStream();
         },
         onError: (err) => {
           sessionManager.clearActiveProcess(session.id);
           sendEvent('error', { message: err.message });
-          try { controller.close(); } catch (e) { /* already closed */ }
+          closeStream();
         },
       });
 
@@ -105,6 +141,10 @@ app.post('/api/chat', authMiddleware, async (c) => {
     },
     cancel() {
       // Called when client disconnects — kill orphaned process & clear state
+      console.log(`[relay] Session ${session.id}: Client disconnected, cleaning up`);
+      streamClosed = true;
+      if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+      if (processTimer) { clearTimeout(processTimer); processTimer = null; }
       if (streamChild) {
         try { streamChild.kill('SIGTERM'); } catch (e) { /* ignore */ }
       }
@@ -118,6 +158,7 @@ app.post('/api/chat', authMiddleware, async (c) => {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',  // Disable proxy buffering (nginx, Tailscale)
     },
   });
 });
