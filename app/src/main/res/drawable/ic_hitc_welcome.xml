@@ -4,19 +4,38 @@
     android:height="64dp"
     android:viewportWidth="64"
     android:viewportHeight="64">
-    <!-- HIT-C welcome icon: running man in circle -->
-    <!-- Circle background (coral_bg) -->
+    <!-- HIT-C welcome — Khalipha icon centred in soft circle -->
+    <!-- Soft circle background -->
     <path
         android:fillColor="#FFE8E5"
         android:pathData="M32,32m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0" />
-    <!-- Running man (centered, scaled up, coral) -->
+    <!-- Khalipha icon (scaled and centred) -->
     <group
-        android:translateX="14"
-        android:translateY="10"
-        android:scaleX="1.5"
-        android:scaleY="1.5">
+        android:translateX="12"
+        android:translateY="12"
+        android:scaleX="1.67"
+        android:scaleY="1.67">
         <path
             android:fillColor="#FF6B5B"
-            android:pathData="M13.49,5.48c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM9.89,19.38l1,-4.4 2.1,2v6h2v-7.5l-2.1,-2 0.6,-3c1.3,1.5 3.3,2.5 5.5,2.5v-2c-1.86,0 -3.47,-1.01 -4.34,-2.51l-0.95,-1.58c-0.57,-0.95 -1.67,-1.39 -2.71,-1.06l-4.65,1.64c-0.73,0.26 -1.23,0.95 -1.23,1.73v3.4h2v-2.93l1.8,-0.63 -1.5,7.72 -3.01,0.63v2.1l4.49,-1.01z" />
+            android:pathData="M12,1.5
+                C14.2,1.5 16.1,2.6 17.8,4.0
+                C19.5,5.4 21.0,7.2 21.8,9.3
+                C22.6,11.4 22.6,12.6 21.8,14.7
+                C21.0,16.8 19.5,18.6 17.8,20.0
+                C16.1,21.4 14.2,22.5 12,22.5
+                C9.8,22.5 7.9,21.4 6.2,20.0
+                C4.5,18.6 3.0,16.8 2.2,14.7
+                C1.4,12.6 1.4,11.4 2.2,9.3
+                C3.0,7.2 4.5,5.4 6.2,4.0
+                C7.9,2.6 9.8,1.5 12,1.5Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M10,7.5
+                C10,7.0 10.3,6.8 10.7,7.0
+                L17.0,11.2
+                C17.5,11.5 17.5,12.5 17.0,12.8
+                L10.7,17.0
+                C10.3,17.2 10,17.0 10,16.5
+                Z" />
     </group>
 </vector>

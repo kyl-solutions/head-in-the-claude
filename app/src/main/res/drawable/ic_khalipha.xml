@@ -4,7 +4,8 @@
     android:height="18dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- User badge — Khalipha icon (organic hex + play cutout) -->
+    <!-- Khalipha icon — organic hex with play triangle cutout -->
+    <!-- Outer organic hex shape (coral) -->
     <path
         android:fillColor="#FF6B5B"
         android:pathData="M12,1.5
@@ -18,6 +19,7 @@
             C1.4,12.6 1.4,11.4 2.2,9.3
             C3.0,7.2 4.5,5.4 6.2,4.0
             C7.9,2.6 9.8,1.5 12,1.5Z" />
+    <!-- Inner triangle cutout (white, rounded play shape) -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M10,7.5
