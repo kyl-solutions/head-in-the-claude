@@ -71,4 +71,16 @@ export class SessionManager {
     }
     return this.sessions.delete(sessionId);
   }
+
+  clearAll() {
+    let count = 0;
+    for (const [id, session] of this.sessions) {
+      if (session.activeProcess) {
+        try { session.activeProcess.kill('SIGTERM'); } catch (e) { /* ignore */ }
+      }
+      count++;
+    }
+    this.sessions.clear();
+    return count;
+  }
 }

@@ -77,6 +77,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sessionsList: RecyclerView
     private lateinit var sessionsEmptyText: TextView
     private lateinit var newSessionButton: ImageButton
+    private lateinit var clearAllSessionsButton: ImageButton
+    private lateinit var refreshProjectsButton: ImageButton
     private lateinit var drawerShortcutsContainer: LinearLayout
     private lateinit var settingsModelValue: TextView
     private lateinit var settingsRelayValue: TextView
@@ -202,6 +204,8 @@ class MainActivity : AppCompatActivity() {
         sessionsList = findViewById(R.id.sessionsList)
         sessionsEmptyText = findViewById(R.id.sessionsEmptyText)
         newSessionButton = findViewById(R.id.newSessionButton)
+        clearAllSessionsButton = findViewById(R.id.clearAllSessionsButton)
+        refreshProjectsButton = findViewById(R.id.refreshProjectsButton)
         drawerShortcutsContainer = findViewById(R.id.drawerShortcutsContainer)
         settingsModelValue = findViewById(R.id.settingsModelValue)
         settingsRelayValue = findViewById(R.id.settingsRelayValue)
@@ -364,12 +368,37 @@ class MainActivity : AppCompatActivity() {
         }
 
         sendButton.setOnClickListener {
-            sendMessage()
+            if (isStreaming) {
+                abortCurrentRequest()
+            } else {
+                sendMessage()
+            }
         }
 
         newSessionButton.setOnClickListener {
             startNewSession()
             drawerLayout.closeDrawer(GravityCompat.START)
+        }
+
+        clearAllSessionsButton.setOnClickListener {
+            AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_MaterialComponents_Dialog_Alert)
+                .setTitle("Clear all sessions?")
+                .setMessage(getString(R.string.drawer_clear_sessions_confirm))
+                .setPositiveButton("Clear") { _, _ ->
+                    lifecycleScope.launch {
+                        sessionRepo.deleteAllConversations()
+                        if (useRelay) relayClient?.clearAllSessions()
+                        relaySessionMgr.newSession()
+                        startNewSession()
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        refreshProjectsButton.setOnClickListener {
+            loadProjects()
+            Toast.makeText(this, "Refreshing projects...", Toast.LENGTH_SHORT).show()
         }
 
         screenshotButton.setOnClickListener {
@@ -412,11 +441,31 @@ class MainActivity : AppCompatActivity() {
     // ─── Drawer Actions ─────────────────────────────────────────
 
     private fun onProjectTap(project: ProjectInfo) {
-        val contextPrefix = "Working in ${project.path} — "
-        commandInput.setText(contextPrefix)
-        commandInput.setSelection(contextPrefix.length)
-        commandInput.requestFocus()
         drawerLayout.closeDrawer(GravityCompat.START)
+
+        if (useRelay) {
+            // Start a fresh relay session for this project
+            startNewSession()
+            lifecycleScope.launch {
+                val ctx = relayClient?.getProjectContext(project.name)
+                if (ctx != null) {
+                    // Project has a context command — send its markdown content as the prompt
+                    sendViaRelayWithDir(ctx.content, ctx.path, "> ${project.name} — /${ctx.command}")
+                } else {
+                    // No context command — just orient Claude in the project
+                    sendViaRelayWithDir(
+                        "List the project structure and summarize what this is.",
+                        project.path,
+                        "> ${project.name}"
+                    )
+                }
+            }
+        } else {
+            val contextPrefix = "Working in ${project.path} — "
+            commandInput.setText(contextPrefix)
+            commandInput.setSelection(contextPrefix.length)
+            commandInput.requestFocus()
+        }
     }
 
     private fun onSessionTap(conversation: Conversation) {
@@ -667,6 +716,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Send via relay with a specific working directory (for project context loading).
+     */
+    private fun sendViaRelayWithDir(message: String, workingDir: String, displayAs: String) {
+        if (isStreaming) return
+        setStreamingState(true)
+        appendOutput("\n")
+        appendInlineIcon(R.drawable.ic_user_badge)
+        appendColoredOutput(" User: ", colorCoral)
+        appendColoredOutput("$displayAs\n\n", colorPrimary)
+        appendInlineIcon(R.drawable.ic_claude)
+        appendOutput(" Claude: ")
+        markResponseStart()
+
+        val client = relayClient ?: run {
+            appendColoredOutput("Relay client not initialized\n", colorRed)
+            setStreamingState(false)
+            return
+        }
+        activeJob = lifecycleScope.launch {
+            client.sendMessage(relaySessionMgr.currentSessionId, message, workingDir)
+                .flowOn(Dispatchers.IO)
+                .onCompletion { finalizeResponse(); setStreamingState(false) }
+                .catch { e ->
+                    appendColoredOutput("\nError: ${e.message}\n", colorRed); setStreamingState(false)
+                }
+                .collect { event -> handleRelayEvent(event) }
+        }
+    }
+
     private fun sendViaDirect(message: String) {
         val client = claudeClient ?: run {
             Toast.makeText(this, "Claude client not initialized", Toast.LENGTH_SHORT).show()
@@ -792,6 +871,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ─── Session Management ─────────────────────────────────────
+
+    private fun abortCurrentRequest() {
+        appendColoredOutput("\n[stopped]\n", colorRed)
+        activeJob?.cancel()
+        activeJob = null
+        if (useRelay) {
+            val sid = relaySessionMgr.currentSessionId
+            if (sid != null) lifecycleScope.launch { relayClient?.abort(sid) }
+        } else {
+            claudeClient?.abort()
+        }
+        finalizeResponse()
+        setStreamingState(false)
+    }
 
     private fun startNewSession() {
         activeJob?.cancel()
@@ -923,12 +1016,15 @@ class MainActivity : AppCompatActivity() {
     private fun setStreamingState(streaming: Boolean) {
         isStreaming = streaming
         runOnUiThread {
-            sendButton.isEnabled = !streaming
+            // Send button becomes stop button while streaming
+            sendButton.isEnabled = true
+            sendButton.setImageResource(if (streaming) R.drawable.ic_stop else R.drawable.ic_send)
+            sendButton.alpha = 1.0f
+            sendButton.contentDescription = if (streaming) getString(R.string.stop_generation) else getString(R.string.send)
             screenshotButton.isEnabled = !streaming
             attachButton.isEnabled = !streaming
             attachButton.alpha = if (streaming) 0.5f else 1.0f
             commandInput.isEnabled = !streaming
-            sendButton.alpha = if (streaming) 0.5f else 1.0f
             // Thinking indicator with animated runner
             if (streaming) {
                 thinkingIndicator.visibility = View.VISIBLE

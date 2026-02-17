@@ -29,4 +29,7 @@ interface ConversationDao {
 
     @Query("SELECT * FROM conversations ORDER BY updatedAt DESC LIMIT 1")
     suspend fun getMostRecentConversation(): Conversation?
+
+    @Query("DELETE FROM conversations")
+    suspend fun deleteAllConversations()
 }

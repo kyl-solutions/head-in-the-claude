@@ -34,6 +34,10 @@
     <string name="drawer_projects_empty">Connect to relay to browse projects</string>
     <string name="drawer_sessions_empty">No conversations yet</string>
     <string name="drawer_new_session">New Session</string>
+    <string name="drawer_clear_sessions">Clear All Sessions</string>
+    <string name="drawer_refresh_projects">Refresh Projects</string>
+    <string name="drawer_clear_sessions_confirm">Delete all conversations? This cannot be undone.</string>
+    <string name="stop_generation">Stop</string>
 
     <!-- Settings -->
     <string name="settings_model">Model</string>

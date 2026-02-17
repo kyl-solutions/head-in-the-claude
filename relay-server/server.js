@@ -232,7 +232,42 @@ app.get('/api/projects', authMiddleware, async (c) => {
 });
 
 // ---------------------------------------------------------------------------
-// Sessions — list, create, delete
+// Project context command — read .claude/commands/<name>.md from a project
+// ---------------------------------------------------------------------------
+app.get('/api/projects/:name/context', authMiddleware, async (c) => {
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+
+  const projectName = c.req.param('name');
+  const projectDir = path.join(WORKING_DIR, projectName);
+
+  try {
+    // Look for the project's own context command
+    const commandsDir = path.join(projectDir, '.claude', 'commands');
+    const entries = await fs.readdir(commandsDir).catch(() => []);
+    const mdFiles = entries.filter(f => f.endsWith('.md'));
+
+    if (mdFiles.length === 0) {
+      return c.json({ found: false, name: projectName, content: null });
+    }
+
+    // Return the first .md command file content (sent as prompt to Claude)
+    const commandFile = mdFiles[0];
+    const content = await fs.readFile(path.join(commandsDir, commandFile), 'utf-8');
+    return c.json({
+      found: true,
+      name: projectName,
+      command: commandFile.replace('.md', ''),
+      content,
+      path: path.join(WORKING_DIR, projectName),
+    });
+  } catch (e) {
+    return c.json({ found: false, name: projectName, error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Sessions — list, create, delete, clear all
 // ---------------------------------------------------------------------------
 app.get('/api/sessions', authMiddleware, (c) => {
   return c.json({ sessions: sessionManager.list() });
@@ -247,6 +282,12 @@ app.delete('/api/sessions/:id', authMiddleware, (c) => {
   const id = c.req.param('id');
   const deleted = sessionManager.delete(id);
   return c.json({ deleted });
+});
+
+// Clear all relay sessions
+app.delete('/api/sessions', authMiddleware, (c) => {
+  const cleared = sessionManager.clearAll();
+  return c.json({ cleared });
 });
 
 // Reset — force-clear stuck session state (fixes 409 errors)

@@ -197,6 +197,13 @@ class SessionRepository(private val db: ConversationDatabase) {
     }
 
     /**
+     * Delete all conversations and their messages.
+     */
+    suspend fun deleteAllConversations() = withContext(Dispatchers.IO) {
+        conversationDao.deleteAllConversations()
+    }
+
+    /**
      * Check if there are any conversations.
      */
     suspend fun hasConversations(): Boolean = withContext(Dispatchers.IO) {
