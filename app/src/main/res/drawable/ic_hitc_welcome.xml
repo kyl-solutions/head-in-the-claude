@@ -4,19 +4,30 @@
     android:height="64dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
-    <!-- HIT-C welcome — Khalipha blob, large, with soft glow bg -->
-    <!-- Soft glow circle behind blob -->
+    <!-- HIT-C welcome — Khalipha hex+play icon, large, with soft glow bg -->
+    <!-- Soft glow circle behind icon -->
     <path
         android:fillColor="#FFE8E5"
         android:pathData="M50,50m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
-    <!-- Khalipha organic blob -->
+    <!-- Khalipha organic hex with play cutout (scaled to fit inside glow) -->
     <path
         android:fillColor="#E8735A"
-        android:pathData="M 50,14
-            C 63,12 74,17 80,28
-            C 86,39 88,50 83,61
-            C 78,72 69,80 57,83
-            C 45,86 33,83 24,74
-            C 15,65 12,52 15,40
-            C 18,28 30,16 50,14 Z" />
+        android:fillType="evenOdd"
+        android:pathData="
+            M 50,12
+            C 59,11 68,14 74,21
+            C 80,28 84,38 83,47
+            C 82,56 79,65 73,72
+            C 67,79 59,83 51,82
+            C 43,81 35,77 29,71
+            C 23,65 19,56 19,47
+            C 19,38 22,29 28,22
+            C 34,15 42,13 50,12 Z
+            M 42,36
+            C 41,35 39,36 39,38
+            L 39,62
+            C 39,64 41,65 42,64
+            L 62,52
+            C 63,51 63,49 62,48
+            Z" />
 </vector>

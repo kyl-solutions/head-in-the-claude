@@ -4,14 +4,25 @@
     android:height="18dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
-    <!-- User chat badge — Khalipha organic blob -->
+    <!-- User chat badge — Khalipha hex + play cutout -->
     <path
         android:fillColor="#E8735A"
-        android:pathData="M 50,8
-            C 65,6 78,12 85,25
-            C 92,38 94,52 88,65
-            C 82,78 72,88 58,92
-            C 44,96 28,92 18,80
-            C 8,68 6,52 10,38
-            C 14,24 28,10 50,8 Z" />
+        android:fillType="evenOdd"
+        android:pathData="
+            M 50,4
+            C 62,3  74,8  82,18
+            C 90,28 95,42 94,54
+            C 93,66 87,78 78,86
+            C 69,94 56,98 44,96
+            C 32,94 20,88 13,78
+            C 6,68  3,54  5,42
+            C 7,30  14,18 24,10
+            C 34,2  42,5  50,4 Z
+            M 38,32
+            C 36,30 33,32 33,35
+            L 33,65
+            C 33,68 36,70 38,68
+            L 66,53
+            C 68,52 68,48 66,47
+            Z" />
 </vector>

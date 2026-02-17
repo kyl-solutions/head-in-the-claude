@@ -4,20 +4,31 @@
     android:height="18dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
-    <!-- Khalipha organic blob — thinking state (squished, lighter coral) -->
-    <!-- Slightly deformed blob to create squish-stretch when alternated with base -->
+    <!-- Khalipha icon — thinking state (squished hex + play cutout, lighter coral) -->
+    <!-- Slightly deformed outer hex to create squish-stretch when alternated with base -->
     <path
         android:fillColor="#F0856F"
-        android:pathData="M 50,11
-            C 67,8 80,14 87,27
-            C 93,40 93,54 86,66
-            C 79,78 70,86 56,90
-            C 42,94 26,90 17,78
-            C 8,66 7,50 12,36
-            C 17,22 33,12 50,11 Z" />
+        android:fillType="evenOdd"
+        android:pathData="
+            M 50,7
+            C 64,5  77,10  85,20
+            C 93,30 97,44  95,56
+            C 93,68 85,80  75,87
+            C 65,94 53,97  42,95
+            C 31,93 18,86  11,76
+            C 4,66  2,52   5,40
+            C 8,28  16,17  27,10
+            C 38,3  46,8   50,7 Z
+            M 38,34
+            C 36,32 33,34 33,37
+            L 33,63
+            C 33,66 36,68 38,66
+            L 64,53
+            C 66,52 66,48 64,47
+            Z" />
     <!-- Orbiting dot (top-right) -->
     <path
         android:fillColor="#E8735A"
         android:fillAlpha="0.5"
-        android:pathData="M82,12m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+        android:pathData="M84,10m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
 </vector>
