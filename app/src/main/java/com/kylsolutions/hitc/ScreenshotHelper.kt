@@ -1,15 +1,12 @@
 package com.kylsolutions.hitc
 
 import android.Manifest
-import android.app.Activity
-import android.content.ContentValues
-import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
+import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -28,6 +25,7 @@ class ScreenshotHelper(
 
     private var imageUri: Uri? = null
     private lateinit var takePictureLauncher: ActivityResultLauncher<Uri>
+    private lateinit var pickImageLauncher: ActivityResultLauncher<String>
     private lateinit var permissionLauncher: ActivityResultLauncher<String>
 
     fun initialize() {
@@ -37,6 +35,15 @@ class ScreenshotHelper(
         ) { success ->
             if (success && imageUri != null) {
                 handleCapturedImage(imageUri!!)
+            }
+        }
+
+        // Register image picker launcher (gallery/files)
+        pickImageLauncher = activity.registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            if (uri != null) {
+                handlePickedImage(uri)
             }
         }
 
@@ -57,6 +64,23 @@ class ScreenshotHelper(
             hasCameraPermission() -> launchCamera()
             else -> requestCameraPermission()
         }
+    }
+
+    fun pickImage() {
+        pickImageLauncher.launch("image/*")
+    }
+
+    fun showAttachOptions() {
+        val options = arrayOf("Camera", "Gallery / Files")
+        AlertDialog.Builder(activity)
+            .setTitle("Attach Image")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> captureScreenshot()
+                    1 -> pickImage()
+                }
+            }
+            .show()
     }
 
     private fun hasCameraPermission(): Boolean {
@@ -92,38 +116,58 @@ class ScreenshotHelper(
             val inputStream = activity.contentResolver.openInputStream(uri)
             val bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
-
-            // Show preview dialog
-            showImagePreview(bitmap, uri)
+            if (bitmap != null) {
+                val file = File(uri.path ?: return)
+                showImagePreview(bitmap, file)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    private fun showImagePreview(bitmap: Bitmap, uri: Uri) {
-        val builder = AlertDialog.Builder(activity)
-        builder.setTitle("Screenshot Captured")
-        builder.setMessage("Send this screenshot to Claude?\n\n(Future: Will upload to conversation)")
+    private fun handlePickedImage(uri: Uri) {
+        try {
+            val inputStream = activity.contentResolver.openInputStream(uri) ?: return
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream.close()
+            if (bitmap != null) {
+                // Save picked image to temp file for the send pipeline
+                val tempFile = createImageFile()
+                FileOutputStream(tempFile).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
+                }
+                showImagePreview(bitmap, tempFile)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
-        // TODO: Add ImageView to dialog to show preview
-        // For now, just confirm
-
-        builder.setPositiveButton("Send") { dialog, _ ->
-            val file = File(uri.path ?: return@setPositiveButton)
-            onScreenshotCaptured(file)
-            dialog.dismiss()
+    private fun showImagePreview(bitmap: Bitmap, file: File) {
+        val imageView = ImageView(activity).apply {
+            setImageBitmap(bitmap)
+            adjustViewBounds = true
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            val pad = (16 * activity.resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, 0)
         }
 
-        builder.setNegativeButton("Retake") { dialog, _ ->
-            dialog.dismiss()
-            launchCamera()
+        val container = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(imageView)
         }
 
-        builder.setNeutralButton("Cancel") { dialog, _ ->
-            dialog.dismiss()
-        }
-
-        builder.show()
+        AlertDialog.Builder(activity)
+            .setTitle("Send Image")
+            .setView(container)
+            .setPositiveButton("Send") { dialog, _ ->
+                onScreenshotCaptured(file)
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun showPermissionDeniedDialog() {

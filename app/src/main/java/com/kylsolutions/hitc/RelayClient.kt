@@ -182,10 +182,13 @@ class RelayClient(
 
             projectsArray.map { elem ->
                 val obj = elem.asJsonObject
+                val lastCommit = obj.getAsJsonObject("lastCommit")
                 ProjectInfo(
                     name = obj.get("name").asString,
                     path = obj.get("path").asString,
-                    type = obj.get("type")?.asString ?: "unknown"
+                    type = obj.get("type")?.asString ?: "unknown",
+                    lastCommitTimestamp = lastCommit?.get("timestamp")?.asLong,
+                    lastCommitMessage = lastCommit?.get("message")?.asString
                 )
             }
         } catch (e: Exception) {
@@ -245,5 +248,7 @@ sealed class RelayEvent {
 data class ProjectInfo(
     val name: String,
     val path: String,
-    val type: String
+    val type: String,
+    val lastCommitTimestamp: Long? = null,
+    val lastCommitMessage: String? = null
 )

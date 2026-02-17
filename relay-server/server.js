@@ -142,6 +142,7 @@ app.post('/api/chat/abort', authMiddleware, async (c) => {
 app.get('/api/projects', authMiddleware, async (c) => {
   const fs = await import('node:fs/promises');
   const path = await import('node:path');
+  const { execSync } = await import('node:child_process');
 
   const projectMarkers = ['.git', 'package.json', 'build.gradle.kts', 'build.gradle', 'Cargo.toml', 'go.mod', 'pom.xml', 'requirements.txt', 'pyproject.toml', 'Makefile'];
 
@@ -164,11 +165,25 @@ app.get('/api/projects', authMiddleware, async (c) => {
       }
 
       if (type) {
-        projects.push({ name: entry.name, path: dirPath, type });
+        let lastCommit = null;
+        // Read latest git commit info if .git exists
+        try {
+          await fs.access(path.join(dirPath, '.git'));
+          const ts = parseInt(execSync('git log -1 --format=%ct', { cwd: dirPath, timeout: 3000 }).toString().trim(), 10);
+          const msg = execSync('git log -1 --format=%s', { cwd: dirPath, timeout: 3000 }).toString().trim();
+          if (!isNaN(ts)) lastCommit = { timestamp: ts, message: msg };
+        } catch { /* no git history or not a git repo */ }
+
+        projects.push({ name: entry.name, path: dirPath, type, lastCommit });
       }
     }
 
-    projects.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort by most recent commit first; projects without commits go last
+    projects.sort((a, b) => {
+      const ta = a.lastCommit?.timestamp ?? 0;
+      const tb = b.lastCommit?.timestamp ?? 0;
+      return tb - ta;
+    });
     return c.json({ projects });
   } catch (e) {
     return c.json({ error: e.message, projects: [] }, 500);

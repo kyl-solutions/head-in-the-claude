@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sendButton: ImageButton
     private lateinit var scrollView: ScrollView
     private lateinit var screenshotButton: ImageButton
+    private lateinit var attachButton: ImageButton
     private lateinit var connectionBadge: TextView
     private lateinit var shortcutScroll: HorizontalScrollView
     private lateinit var shortcutContainer: LinearLayout
@@ -178,6 +179,7 @@ class MainActivity : AppCompatActivity() {
         sendButton = findViewById(R.id.sendButton)
         scrollView = findViewById(R.id.scrollView)
         screenshotButton = findViewById(R.id.screenshotFab)
+        attachButton = findViewById(R.id.attachButton)
         connectionBadge = findViewById(R.id.connectionBadge)
         shortcutScroll = findViewById(R.id.shortcutScroll)
         shortcutContainer = findViewById(R.id.shortcutContainer)
@@ -363,6 +365,10 @@ class MainActivity : AppCompatActivity() {
 
         screenshotButton.setOnClickListener {
             screenshotHelper.captureScreenshot()
+        }
+
+        attachButton.setOnClickListener {
+            screenshotHelper.showAttachOptions()
         }
 
         commandInput.setOnEditorActionListener { _, _, _ ->
@@ -606,7 +612,7 @@ class MainActivity : AppCompatActivity() {
         setStreamingState(true)
         // User message with coral "User:" label
         val display = displayAs ?: prompt
-        appendColoredOutput("\n🧑 User: ", colorCoral)
+        appendColoredOutput("\n🏃 User: ", colorCoral)
         appendColoredOutput("$display\n\n", colorPrimary)
         // Claude response prefix
         appendOutput("Claude: ")
@@ -839,6 +845,8 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             sendButton.isEnabled = !streaming
             screenshotButton.isEnabled = !streaming
+            attachButton.isEnabled = !streaming
+            attachButton.alpha = if (streaming) 0.5f else 1.0f
             commandInput.isEnabled = !streaming
             sendButton.alpha = if (streaming) 0.5f else 1.0f
         }
@@ -885,11 +893,30 @@ class ProjectsAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val project = items[position]
         holder.name.text = project.name
-        holder.type.text = project.type
+        holder.type.text = if (project.lastCommitTimestamp != null) {
+            val relative = getRelativeTimeString(project.lastCommitTimestamp)
+            val msg = project.lastCommitMessage?.take(30) ?: ""
+            "$relative \u00B7 $msg"
+        } else {
+            project.type
+        }
         holder.itemView.setOnClickListener { onTap(project) }
     }
 
     override fun getItemCount() = items.size
+
+    private fun getRelativeTimeString(epochSeconds: Long): String {
+        val now = System.currentTimeMillis() / 1000
+        val diff = now - epochSeconds
+        return when {
+            diff < 60 -> "just now"
+            diff < 3600 -> "${diff / 60}m ago"
+            diff < 86400 -> "${diff / 3600}h ago"
+            diff < 604800 -> "${diff / 86400}d ago"
+            diff < 2592000 -> "${diff / 604800}w ago"
+            else -> "${diff / 2592000}mo ago"
+        }
+    }
 }
 
 class SessionsAdapter(

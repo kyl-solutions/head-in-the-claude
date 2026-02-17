@@ -98,6 +98,7 @@
                 android:id="@+id/terminalOutput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textIsSelectable="true"
                 android:textColor="@color/text_primary"
                 android:textSize="15sp"
                 android:fontFamily="@font/metropolis"
@@ -161,15 +162,20 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <ImageButton
-                android:id="@+id/screenshotFab"
+                android:id="@+id/attachButton"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_camera"
+                android:src="@drawable/ic_attach"
                 android:scaleType="centerInside"
-                android:contentDescription="@string/capture_screenshot"
+                android:contentDescription="Attach image"
                 android:padding="8dp"
-                app:tint="@color/text_secondary"
+                app:tint="@color/text_secondary" />
+
+            <ImageButton
+                android:id="@+id/screenshotFab"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
                 android:visibility="gone" />
 
             <EditText
