@@ -2,40 +2,21 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="64dp"
     android:height="64dp"
-    android:viewportWidth="64"
-    android:viewportHeight="64">
-    <!-- HIT-C welcome — Khalipha icon centred in soft circle -->
-    <!-- Soft circle background -->
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <!-- HIT-C welcome — Khalipha blob, large, with soft glow bg -->
+    <!-- Soft glow circle behind blob -->
     <path
         android:fillColor="#FFE8E5"
-        android:pathData="M32,32m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0" />
-    <!-- Khalipha icon (scaled and centred) -->
-    <group
-        android:translateX="12"
-        android:translateY="12"
-        android:scaleX="1.67"
-        android:scaleY="1.67">
-        <path
-            android:fillColor="#FF6B5B"
-            android:pathData="M12,1.5
-                C14.2,1.5 16.1,2.6 17.8,4.0
-                C19.5,5.4 21.0,7.2 21.8,9.3
-                C22.6,11.4 22.6,12.6 21.8,14.7
-                C21.0,16.8 19.5,18.6 17.8,20.0
-                C16.1,21.4 14.2,22.5 12,22.5
-                C9.8,22.5 7.9,21.4 6.2,20.0
-                C4.5,18.6 3.0,16.8 2.2,14.7
-                C1.4,12.6 1.4,11.4 2.2,9.3
-                C3.0,7.2 4.5,5.4 6.2,4.0
-                C7.9,2.6 9.8,1.5 12,1.5Z" />
-        <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M10,7.5
-                C10,7.0 10.3,6.8 10.7,7.0
-                L17.0,11.2
-                C17.5,11.5 17.5,12.5 17.0,12.8
-                L10.7,17.0
-                C10.3,17.2 10,17.0 10,16.5
-                Z" />
-    </group>
+        android:pathData="M50,50m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
+    <!-- Khalipha organic blob -->
+    <path
+        android:fillColor="#E8735A"
+        android:pathData="M 50,14
+            C 63,12 74,17 80,28
+            C 86,39 88,50 83,61
+            C 78,72 69,80 57,83
+            C 45,86 33,83 24,74
+            C 15,65 12,52 15,40
+            C 18,28 30,16 50,14 Z" />
 </vector>
