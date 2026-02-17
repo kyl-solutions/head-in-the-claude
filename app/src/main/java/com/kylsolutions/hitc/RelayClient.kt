@@ -182,7 +182,9 @@ class RelayClient(
 
             projectsArray.map { elem ->
                 val obj = elem.asJsonObject
-                val lastCommit = obj.getAsJsonObject("lastCommit")
+                val lastCommit = obj.get("lastCommit")?.let {
+                    if (it.isJsonObject) it.asJsonObject else null
+                }
                 ProjectInfo(
                     name = obj.get("name").asString,
                     path = obj.get("path").asString,

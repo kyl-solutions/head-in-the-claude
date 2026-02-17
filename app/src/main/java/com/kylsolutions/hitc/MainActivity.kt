@@ -1,11 +1,13 @@
 package com.kylsolutions.hitc
 
 import android.content.Intent
+import android.graphics.drawable.AnimationDrawable
 import android.os.Build
 import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.text.style.ImageSpan
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.HorizontalScrollView
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -32,6 +35,7 @@ import com.kylsolutions.hitc.repository.SessionRepository
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
@@ -64,6 +68,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var menuButton: ImageButton
     private lateinit var settingsButton: ImageButton
     private lateinit var bottomTabLayout: TabLayout
+    private lateinit var thinkingIndicator: LinearLayout
+    private lateinit var thinkingIcon: ImageView
 
     // Views — Drawer
     private lateinit var projectsList: RecyclerView
@@ -157,8 +163,9 @@ class MainActivity : AppCompatActivity() {
         val model = apiKeyManager.getModel()
         claudeClient = AnthropicClient(apiKey, model)
 
-        // Initialize relay
+        // Initialize relay — clear stale session from previous run
         relaySessionMgr = HitcSessionManager(this)
+        relaySessionMgr.currentSessionId = null
 
         initViews()
         setupBottomTabs()
@@ -186,6 +193,8 @@ class MainActivity : AppCompatActivity() {
         menuButton = findViewById(R.id.menuButton)
         settingsButton = findViewById(R.id.settingsButton)
         bottomTabLayout = findViewById(R.id.bottomTabLayout)
+        thinkingIndicator = findViewById(R.id.thinkingIndicator)
+        thinkingIcon = findViewById(R.id.thinkingIcon)
 
         // Drawer views
         projectsList = findViewById(R.id.projectsList)
@@ -438,21 +447,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadProjects() {
-        val client = relayClient ?: return
+        val client = relayClient ?: run {
+            Log.w(TAG, "loadProjects: relayClient is null")
+            return
+        }
+        Log.i(TAG, "loadProjects: starting fetch")
         lifecycleScope.launch {
             try {
-                val projects = client.getProjects()
-                if (projects.isEmpty()) {
-                    projectsEmptyText.text = getString(R.string.drawer_projects_empty)
-                    projectsEmptyText.visibility = View.VISIBLE
-                    projectsList.visibility = View.GONE
-                } else {
-                    projectsEmptyText.visibility = View.GONE
-                    projectsList.visibility = View.VISIBLE
-                    projectsAdapter.submitList(projects)
+                val projects = withContext(Dispatchers.IO) { client.getProjects() }
+                Log.i(TAG, "loadProjects: got ${projects.size} projects")
+                runOnUiThread {
+                    if (projects.isEmpty()) {
+                        projectsEmptyText.text = getString(R.string.drawer_projects_empty)
+                        projectsEmptyText.visibility = View.VISIBLE
+                        projectsList.visibility = View.GONE
+                    } else {
+                        projectsEmptyText.visibility = View.GONE
+                        projectsList.visibility = View.VISIBLE
+                        projectsAdapter.submitList(projects)
+                        projectsList.requestLayout()
+                        Log.i(TAG, "loadProjects: adapter updated, recycler visible=${projectsList.visibility == View.VISIBLE}, itemCount=${projectsAdapter.itemCount}")
+                    }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to load projects: ${e.message}")
+                Log.e(TAG, "Failed to load projects: ${e.message}", e)
             }
         }
     }
@@ -531,6 +549,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun connectToRelay() {
+        showWelcomeScreen()
         lifecycleScope.launch {
             Log.i(TAG, "Connecting to relay at ${relaySessionMgr.relayUrl}")
 
@@ -610,12 +629,15 @@ class MainActivity : AppCompatActivity() {
     private fun sendMessageDirect(prompt: String, displayAs: String?) {
         if (isStreaming) return
         setStreamingState(true)
-        // User message with coral "User:" label
+        // User message with branded icon + coral "User:" label
         val display = displayAs ?: prompt
-        appendColoredOutput("\n🏃 User: ", colorCoral)
+        appendOutput("\n")
+        appendInlineIcon(R.drawable.ic_user_badge)
+        appendColoredOutput(" User: ", colorCoral)
         appendColoredOutput("$display\n\n", colorPrimary)
-        // Claude response prefix
-        appendOutput("Claude: ")
+        // Claude response prefix with branded icon
+        appendInlineIcon(R.drawable.ic_claude)
+        appendOutput(" Claude: ")
         markResponseStart()
         if (useRelay) sendViaRelay(prompt) else sendViaDirect(prompt)
     }
@@ -630,7 +652,17 @@ class MainActivity : AppCompatActivity() {
             client.sendMessage(relaySessionMgr.currentSessionId, message)
                 .flowOn(Dispatchers.IO)
                 .onCompletion { finalizeResponse(); setStreamingState(false) }
-                .catch { e -> appendColoredOutput("\nError: ${e.message}\n", colorRed); setStreamingState(false) }
+                .catch { e ->
+                    val msg = e.message ?: ""
+                    if (msg.contains("No conversation found") || msg.contains("exited with code")) {
+                        relaySessionMgr.currentSessionId = null
+                        appendColoredOutput("\nSession expired, retrying...\n", colorGreen)
+                        setStreamingState(false)
+                        sendMessageDirect(message, null)
+                    } else {
+                        appendColoredOutput("\nError: $msg\n", colorRed); setStreamingState(false)
+                    }
+                }
                 .collect { event -> handleRelayEvent(event) }
         }
     }
@@ -669,7 +701,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendMessageWithImage(file: File, caption: String) {
         setStreamingState(true)
-        appendColoredOutput("\n> [Image: ${file.name}] $caption\n\n", colorCoral)
+        appendOutput("\n")
+        appendInlineIcon(R.drawable.ic_user_badge)
+        appendColoredOutput(" [Image: ${file.name}] $caption\n\n", colorCoral)
+        appendInlineIcon(R.drawable.ic_claude)
+        appendOutput(" Claude: ")
         markResponseStart()
         if (useRelay) sendImageViaRelay(file, caption) else sendImageViaDirect(file, caption)
     }
@@ -677,10 +713,23 @@ class MainActivity : AppCompatActivity() {
     private fun sendImageViaRelay(file: File, caption: String) {
         val client = relayClient ?: return
         activeJob = lifecycleScope.launch {
-            client.sendMessageWithImage(relaySessionMgr.currentSessionId, caption, file)
+            // Clear stale session to avoid "No conversation found" errors
+            val sessionId = relaySessionMgr.currentSessionId
+            client.sendMessageWithImage(sessionId, caption, file)
                 .flowOn(Dispatchers.IO)
                 .onCompletion { finalizeResponse(); setStreamingState(false) }
-                .catch { e -> appendColoredOutput("\nError: ${e.message}\n", colorRed); setStreamingState(false) }
+                .catch { e ->
+                    val msg = e.message ?: ""
+                    if (msg.contains("No conversation found") || msg.contains("exited with code")) {
+                        // Session expired — clear and retry with new session
+                        relaySessionMgr.currentSessionId = null
+                        appendColoredOutput("\nSession expired, retrying...\n", colorGreen)
+                        setStreamingState(false)
+                        sendMessageWithImage(file, caption)
+                    } else {
+                        appendColoredOutput("\nError: $msg\n", colorRed); setStreamingState(false)
+                    }
+                }
                 .collect { event -> handleRelayEvent(event) }
         }
     }
@@ -764,8 +813,7 @@ class MainActivity : AppCompatActivity() {
                 assistantResponseBuffer.clear()
                 responseStartPos = -1
                 terminalOutput.text = ""
-                val mode = if (useRelay) "relay" else "direct"
-                appendColoredOutput("New session ($mode)\n\n", colorGreen)
+                showWelcomeScreen()
                 setStreamingState(false)
                 commandInput.requestFocus()
             } catch (e: Exception) {
@@ -806,6 +854,19 @@ class MainActivity : AppCompatActivity() {
         scrollToBottom()
     }
 
+    private fun appendInlineIcon(drawableRes: Int) {
+        val d = ContextCompat.getDrawable(this, drawableRes) ?: return
+        val size = (terminalOutput.textSize * 1.2f).toInt()
+        d.setBounds(0, 0, size, size)
+        val start = spannableOutput.length
+        spannableOutput.append(" ")
+        spannableOutput.setSpan(
+            ImageSpan(d, ImageSpan.ALIGN_BASELINE), start, spannableOutput.length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        terminalOutput.text = spannableOutput
+    }
+
     private fun markResponseStart() { responseStartPos = spannableOutput.length }
 
     private fun finalizeResponse() {
@@ -840,6 +901,25 @@ class MainActivity : AppCompatActivity() {
 
     // ─── UI Helpers ─────────────────────────────────────────────
 
+    private fun showWelcomeScreen() {
+        // Welcome icon (running man in circle)
+        appendOutput("\n")
+        val d = ContextCompat.getDrawable(this, R.drawable.ic_hitc_welcome) ?: return
+        val iconSize = (terminalOutput.textSize * 3.5f).toInt()
+        d.setBounds(0, 0, iconSize, iconSize)
+        val start = spannableOutput.length
+        spannableOutput.append(" ")
+        spannableOutput.setSpan(
+            ImageSpan(d, ImageSpan.ALIGN_BASELINE), start, spannableOutput.length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        terminalOutput.text = spannableOutput
+
+        appendOutput("\n\n")
+        appendColoredOutput("head in the cloud\n", colorCoral)
+        appendColoredOutput("Your AI, everywhere.\n\n", colorPrimary)
+    }
+
     private fun setStreamingState(streaming: Boolean) {
         isStreaming = streaming
         runOnUiThread {
@@ -849,6 +929,15 @@ class MainActivity : AppCompatActivity() {
             attachButton.alpha = if (streaming) 0.5f else 1.0f
             commandInput.isEnabled = !streaming
             sendButton.alpha = if (streaming) 0.5f else 1.0f
+            // Thinking indicator with animated runner
+            if (streaming) {
+                thinkingIndicator.visibility = View.VISIBLE
+                thinkingIcon.setImageResource(R.drawable.anim_runner_thinking)
+                (thinkingIcon.drawable as? AnimationDrawable)?.start()
+            } else {
+                (thinkingIcon.drawable as? AnimationDrawable)?.stop()
+                thinkingIndicator.visibility = View.GONE
+            }
         }
     }
 

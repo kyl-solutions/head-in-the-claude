@@ -141,9 +141,45 @@
             app:tabIndicatorHeight="3dp"
             app:tabGravity="fill"
             app:tabMode="fixed"
-            app:layout_constraintBottom_toTopOf="@id/inputContainer"
+            app:layout_constraintBottom_toTopOf="@id/thinkingIndicator"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Thinking Indicator (above input) -->
+        <LinearLayout
+            android:id="@+id/thinkingIndicator"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:background="@color/bg_main"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/inputContainer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageView
+                android:id="@+id/thinkingIcon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/anim_runner_thinking"
+                android:scaleType="centerInside" />
+
+            <TextView
+                android:id="@+id/thinkingText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Thinking…"
+                android:textColor="@color/coral"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif"
+                android:textStyle="italic" />
+        </LinearLayout>
 
         <!-- Input Area -->
         <LinearLayout
