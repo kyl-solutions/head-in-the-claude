@@ -52,6 +52,8 @@ app.post('/api/chat', authMiddleware, async (c) => {
   sessionManager.recordMessage(session.id);
 
   // Stream response as SSE
+  let streamChild = null;
+
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder();
@@ -62,6 +64,12 @@ app.post('/api/chat', authMiddleware, async (c) => {
         } catch (e) {
           // Stream might be closed
         }
+      };
+
+      // Cleanup helper — guarantees both state systems are cleared
+      const cleanup = () => {
+        claudeBridge.abort(session.id);
+        sessionManager.clearActiveProcess(session.id);
       };
 
       // Send session info first
@@ -92,7 +100,16 @@ app.post('/api/chat', authMiddleware, async (c) => {
         },
       });
 
+      streamChild = child;
       sessionManager.setActiveProcess(session.id, child);
+    },
+    cancel() {
+      // Called when client disconnects — kill orphaned process & clear state
+      if (streamChild) {
+        try { streamChild.kill('SIGTERM'); } catch (e) { /* ignore */ }
+      }
+      claudeBridge.abort(session.id);
+      sessionManager.clearActiveProcess(session.id);
     },
   });
 
@@ -120,6 +137,45 @@ app.post('/api/chat/abort', authMiddleware, async (c) => {
 });
 
 // ---------------------------------------------------------------------------
+// Projects — scan working dir for dev projects
+// ---------------------------------------------------------------------------
+app.get('/api/projects', authMiddleware, async (c) => {
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+
+  const projectMarkers = ['.git', 'package.json', 'build.gradle.kts', 'build.gradle', 'Cargo.toml', 'go.mod', 'pom.xml', 'requirements.txt', 'pyproject.toml', 'Makefile'];
+
+  try {
+    const entries = await fs.readdir(WORKING_DIR, { withFileTypes: true });
+    const projects = [];
+
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+
+      const dirPath = path.join(WORKING_DIR, entry.name);
+      let type = null;
+
+      for (const marker of projectMarkers) {
+        try {
+          await fs.access(path.join(dirPath, marker));
+          type = marker.replace('.', '').replace('_', '-');
+          break;
+        } catch { /* marker not found */ }
+      }
+
+      if (type) {
+        projects.push({ name: entry.name, path: dirPath, type });
+      }
+    }
+
+    projects.sort((a, b) => a.name.localeCompare(b.name));
+    return c.json({ projects });
+  } catch (e) {
+    return c.json({ error: e.message, projects: [] }, 500);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Sessions — list, create, delete
 // ---------------------------------------------------------------------------
 app.get('/api/sessions', authMiddleware, (c) => {
@@ -135,6 +191,14 @@ app.delete('/api/sessions/:id', authMiddleware, (c) => {
   const id = c.req.param('id');
   const deleted = sessionManager.delete(id);
   return c.json({ deleted });
+});
+
+// Reset — force-clear stuck session state (fixes 409 errors)
+app.post('/api/sessions/:id/reset', authMiddleware, (c) => {
+  const id = c.req.param('id');
+  claudeBridge.abort(id);
+  sessionManager.clearActiveProcess(id);
+  return c.json({ reset: true, sessionId: id });
 });
 
 // ---------------------------------------------------------------------------

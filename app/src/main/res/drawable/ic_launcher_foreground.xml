@@ -5,54 +5,61 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- hit(C) logo - elegant programming aesthetic -->
+    <!-- hit(C) logo in coral #FF6B5B on transparent -->
+    <!-- Centered in 108x108 adaptive icon safe zone (18-90) -->
 
-    <!-- "h" letter - warm white -->
+    <!-- "h" -->
     <path
-        android:fillColor="#F0E6D8"
-        android:pathData="M24,42 L24,66 L27,66 L27,55 L27,55 C27,51 30,48 34,48 L34,66 L37,66 L37,48 C37,44 34,42 30,42 L24,42 Z" />
+        android:fillColor="#FF6B5B"
+        android:pathData="M26,40 L26,68 L30,68 L30,55 C30,51 33,48 36,48 L36,68 L40,68 L40,47 C40,43 37,40 33,40 L26,40 Z" />
 
-    <!-- "i" letter with dot - warm white -->
+    <!-- "i" dot -->
     <path
-        android:fillColor="#F0E6D8"
-        android:pathData="M41,48 L41,66 L44,66 L44,48 L41,48 Z" />
+        android:fillColor="#FF6B5B"
+        android:pathData="M43,40 L47,40 L47,44 L43,44 Z" />
+    <!-- "i" stem -->
     <path
-        android:fillColor="#F0E6D8"
-        android:pathData="M41,42 L44,42 L44,45 L41,45 Z" />
+        android:fillColor="#FF6B5B"
+        android:pathData="M43,47 L47,47 L47,68 L43,68 Z" />
 
-    <!-- "t" letter - warm white -->
+    <!-- "t" -->
     <path
-        android:fillColor="#F0E6D8"
-        android:pathData="M48,44 L48,48 L46,48 L46,51 L48,51 L48,63 C48,65 50,66 52,66 L54,66 L54,63 L52,63 C51,63 51,62.5 51,62 L51,51 L54,51 L54,48 L51,48 L51,44 L48,44 Z" />
+        android:fillColor="#FF6B5B"
+        android:pathData="M50,43 L50,47 L48,47 L48,50 L50,50 L50,64 C50,66.5 52,68 54,68 L57,68 L57,64.5 L55,64.5 C53.8,64.5 53.5,64 53.5,63 L53.5,50 L57,50 L57,47 L53.5,47 L53.5,43 L50,43 Z" />
 
-    <!-- "(" bracket - Claude orange -->
+    <!-- Diagonal slash through h-i-t -->
     <path
-        android:fillColor="#E87B35"
-        android:pathData="M58,42 C55,46 54,50 54,54 C54,58 55,62 58,66 L61,66 C58,62 57,58 57,54 C57,50 58,46 61,42 L58,42 Z" />
+        android:strokeColor="#E8E0D4"
+        android:strokeWidth="1.8"
+        android:pathData="M24,52 L56,44"
+        android:fillColor="#00000000" />
 
-    <!-- "C" letter - Claude orange with circular accent -->
+    <!-- "(" -->
     <path
-        android:fillColor="#E87B35"
-        android:pathData="M72,46 C67,46 63,50 63,54 C63,58 67,62 72,62 C75,62 78,60.5 79,58 L76,57 C75.5,58.5 74,60 72,60 C69,60 66,57.5 66,54 C66,50.5 69,48 72,48 C74,48 75.5,49.5 76,51 L79,50 C78,47.5 75,46 72,46 Z" />
+        android:fillColor="#FF6B5B"
+        android:pathData="M60,40 C57,44.5 55.5,49 55.5,54 C55.5,59 57,63.5 60,68 L63.5,68 C60.5,63.5 59,59 59,54 C59,49 60.5,44.5 63.5,40 L60,40 Z" />
 
-    <!-- Circular accent around C -->
+    <!-- "C" -->
     <path
-        android:fillColor="#E87B35"
-        android:strokeColor="#E87B35"
-        android:strokeWidth="1.5"
-        android:pathData="M72,43 A11,11 0 0 1 83,54"
-        android:fillAlpha="0"
-        android:strokeAlpha="0.8" />
-    <path
-        android:fillColor="#E87B35"
-        android:strokeColor="#E87B35"
-        android:strokeWidth="1.5"
-        android:pathData="M72,65 A11,11 0 0 1 61,54"
-        android:fillAlpha="0"
-        android:strokeAlpha="0.8" />
+        android:fillColor="#FF6B5B"
+        android:pathData="M73,45 C68,45 64,49 64,54 C64,59 68,63 73,63 C76,63 78.5,61.5 80,59 L77,57.5 C76,59.2 74.5,60 73,60 C70,60 67.5,57.5 67.5,54 C67.5,50.5 70,48 73,48 C74.5,48 76,48.8 77,50.5 L80,49 C78.5,46.5 76,45 73,45 Z" />
 
-    <!-- ")" bracket - Claude orange -->
+    <!-- C outer arcs (broadcast signal lines) -->
     <path
-        android:fillColor="#E87B35"
-        android:pathData="M83,42 L86,42 C83,46 82,50 82,54 C82,58 83,62 86,66 L83,66 C80,62 79,58 79,54 C79,50 80,46 83,42 Z" />
+        android:strokeColor="#FF6B5B"
+        android:strokeWidth="2.5"
+        android:pathData="M73,42 A12,12 0 0 1 85,54"
+        android:fillColor="#00000000"
+        android:strokeLineCap="round" />
+    <path
+        android:strokeColor="#FF6B5B"
+        android:strokeWidth="2.5"
+        android:pathData="M73,66 A12,12 0 0 1 61,54"
+        android:fillColor="#00000000"
+        android:strokeLineCap="round" />
+
+    <!-- ")" -->
+    <path
+        android:fillColor="#FF6B5B"
+        android:pathData="M84,40 L87.5,40 C84.5,44.5 83,49 83,54 C83,59 84.5,63.5 87.5,68 L84,68 C81,63.5 79.5,59 79.5,54 C79.5,49 81,44.5 84,40 Z" />
 </vector>

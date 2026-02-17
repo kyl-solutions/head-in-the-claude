@@ -5,8 +5,8 @@
             <solid android:color="@color/shortcut_bg_pressed" />
             <stroke
                 android:width="1dp"
-                android:color="@color/claude_orange_dim" />
-            <corners android:radius="8dp" />
+                android:color="@color/coral_dim" />
+            <corners android:radius="16dp" />
             <padding
                 android:left="14dp"
                 android:top="6dp"
@@ -20,7 +20,7 @@
             <stroke
                 android:width="1dp"
                 android:color="@color/shortcut_border" />
-            <corners android:radius="8dp" />
+            <corners android:radius="16dp" />
             <padding
                 android:left="14dp"
                 android:top="6dp"

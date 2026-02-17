@@ -165,6 +165,34 @@ class RelayClient(
         }
     }
 
+    /**
+     * Fetch project list from relay server.
+     */
+    suspend fun getProjects(): List<ProjectInfo> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$baseUrl/api/projects")
+                .header("Authorization", "Bearer $authToken")
+                .get()
+                .build()
+            val response = client.newCall(request).execute()
+            val body = response.body?.string() ?: return@withContext emptyList()
+            val json = JsonParser.parseString(body).asJsonObject
+            val projectsArray = json.getAsJsonArray("projects") ?: return@withContext emptyList()
+
+            projectsArray.map { elem ->
+                val obj = elem.asJsonObject
+                ProjectInfo(
+                    name = obj.get("name").asString,
+                    path = obj.get("path").asString,
+                    type = obj.get("type")?.asString ?: "unknown"
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     private fun parseEvent(type: String?, data: String): RelayEvent {
         return try {
             when (type) {
@@ -210,3 +238,12 @@ sealed class RelayEvent {
     data class Error(val message: String) : RelayEvent()
     object Done : RelayEvent()
 }
+
+/**
+ * A project folder discovered by the relay server.
+ */
+data class ProjectInfo(
+    val name: String,
+    val path: String,
+    val type: String
+)

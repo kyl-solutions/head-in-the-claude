@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.HeadInTheCloud" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/claude_orange</item>
-        <item name="colorPrimaryVariant">@color/claude_orange_dim</item>
-        <item name="colorOnPrimary">@color/text_on_orange</item>
-        <item name="colorSecondary">@color/claude_orange_light</item>
-        <item name="colorSecondaryVariant">@color/claude_orange_dim</item>
-        <item name="colorOnSecondary">@color/text_on_orange</item>
-        <item name="android:statusBarColor">@color/bg_dark</item>
-        <item name="android:navigationBarColor">@color/bg_dark</item>
-        <item name="android:windowLightStatusBar">false</item>
+    <style name="Theme.HeadInTheCloud" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/coral</item>
+        <item name="colorPrimaryVariant">@color/coral_dim</item>
+        <item name="colorOnPrimary">@color/text_on_coral</item>
+        <item name="colorSecondary">@color/coral_light</item>
+        <item name="colorSecondaryVariant">@color/coral_dim</item>
+        <item name="colorOnSecondary">@color/text_on_coral</item>
+        <item name="android:statusBarColor">@color/bg_header</item>
+        <item name="android:navigationBarColor">@color/bg_surface</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:fontFamily">@font/metropolis</item>
+        <item name="tabStyle">@style/HitcTabStyle</item>
+    </style>
+
+    <style name="HitcTabStyle" parent="Widget.MaterialComponents.TabLayout">
+        <item name="tabIndicatorColor">@color/tab_indicator</item>
+        <item name="tabSelectedTextColor">@color/tab_active</item>
+        <item name="tabTextColor">@color/tab_inactive</item>
+        <item name="tabIndicatorHeight">3dp</item>
+        <item name="tabGravity">fill</item>
+        <item name="tabMode">fixed</item>
     </style>
 </resources>

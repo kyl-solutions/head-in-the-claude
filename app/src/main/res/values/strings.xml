@@ -6,16 +6,15 @@
     <string name="connect_to_claude">Connect to Claude</string>
     <string name="connected">Connected</string>
     <string name="new_session">New Session</string>
-    <string name="terminal_welcome">hit(C)\nMobile Claude Code Interface\n\nTap Connect to begin.\n</string>
-    <string name="command_hint">Ask Claude anything…</string>
+    <string name="command_hint">Ask Claude…</string>
     <string name="send">Send</string>
     <string name="capture_screenshot">Capture Screenshot</string>
     <string name="screenshot_saved">Screenshot saved: %1$s</string>
     <string name="screenshot_sent">Screenshot sent to conversation</string>
 
     <!-- Connection badge -->
-    <string name="badge_relay">RELAY</string>
-    <string name="badge_direct">DIRECT</string>
+    <string name="badge_relay">relay</string>
+    <string name="badge_direct">direct</string>
 
     <!-- Shortcut labels + prompts -->
     <string name="shortcut_ls">ls</string>
@@ -26,6 +25,24 @@
     <string name="shortcut_fix">fix</string>
     <string name="shortcut_refactor">refactor</string>
     <string name="shortcut_summarize">summarize</string>
+
+    <!-- Drawer sections -->
+    <string name="drawer_projects">PROJECTS</string>
+    <string name="drawer_sessions">SESSIONS</string>
+    <string name="drawer_shortcuts">SHORTCUTS</string>
+    <string name="drawer_settings">SETTINGS</string>
+    <string name="drawer_projects_empty">Connect to relay to browse projects</string>
+    <string name="drawer_sessions_empty">No conversations yet</string>
+    <string name="drawer_new_session">New Session</string>
+
+    <!-- Settings -->
+    <string name="settings_model">Model</string>
+    <string name="settings_relay_url">Relay URL</string>
+    <string name="settings_api_key">API Key</string>
+    <string name="settings_api_key_set">••••••••</string>
+    <string name="settings_api_key_change">Change</string>
+    <string name="settings_about">About hit(C)</string>
+    <string name="settings_version">v0.3.0</string>
 
     <!-- Translation -->
     <string name="translate_title">Translate</string>

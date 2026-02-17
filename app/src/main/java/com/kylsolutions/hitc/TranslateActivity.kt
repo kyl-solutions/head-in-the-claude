@@ -295,7 +295,7 @@ Text to translate:
 $text"""
 
         val messages = listOf(
-            AnthropicClient.Message("user", prompt)
+            ApiMessage("user", prompt)
         )
 
         translationJob = lifecycleScope.launch {
