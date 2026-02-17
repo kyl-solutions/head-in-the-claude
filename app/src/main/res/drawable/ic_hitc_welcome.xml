@@ -4,30 +4,33 @@
     android:height="64dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
-    <!-- HIT-C welcome — Khalipha hex+play icon, large, with soft glow bg -->
-    <!-- Soft glow circle behind icon -->
+    <!-- HIT-C welcome — cloud speech bubble with warm glow -->
+    <!-- Soft glow behind -->
     <path
         android:fillColor="#FFE8E5"
-        android:pathData="M50,50m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
-    <!-- Khalipha organic hex with play cutout (scaled to fit inside glow) -->
+        android:pathData="M50,46m-46,0a46,46 0,1 1,92 0a46,46 0,1 1,-92 0" />
+    <!-- Cloud body -->
     <path
-        android:fillColor="#E8735A"
-        android:fillType="evenOdd"
+        android:fillColor="#FF6B5B"
         android:pathData="
-            M 50,12
-            C 59,11 68,14 74,21
-            C 80,28 84,38 83,47
-            C 82,56 79,65 73,72
-            C 67,79 59,83 51,82
-            C 43,81 35,77 29,71
-            C 23,65 19,56 19,47
-            C 19,38 22,29 28,22
-            C 34,15 42,13 50,12 Z
-            M 42,36
-            C 41,35 39,36 39,38
-            L 39,62
-            C 39,64 41,65 42,64
-            L 62,52
-            C 63,51 63,49 62,48
+            M 55,14
+            C 70,12 84,20 86,35
+            C 88,46 81,56 71,61
+            C 61,66 47,66 38,63
+            L 24,74
+            C 22,75 20,73 21,71
+            L 26,60
+            C 18,54 13,44 16,33
+            C 19,20 34,15 55,14
             Z" />
+    <!-- Spark — larger for welcome -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.9"
+        android:pathData="M63,28m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <!-- Secondary smaller spark -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.5"
+        android:pathData="M50,36m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
 </vector>

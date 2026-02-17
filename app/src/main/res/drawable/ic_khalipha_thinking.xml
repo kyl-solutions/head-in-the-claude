@@ -4,31 +4,28 @@
     android:height="18dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
-    <!-- Khalipha icon — thinking state (squished hex + play cutout, lighter coral) -->
-    <!-- Slightly deformed outer hex to create squish-stretch when alternated with base -->
+    <!-- HIT-C icon — thinking state, lighter #FF8A7D -->
     <path
-        android:fillColor="#F0856F"
-        android:fillType="evenOdd"
+        android:fillColor="#FF8A7D"
         android:pathData="
-            M 50,7
-            C 64,5  77,10  85,20
-            C 93,30 97,44  95,56
-            C 93,68 85,80  75,87
-            C 65,94 53,97  42,95
-            C 31,93 18,86  11,76
-            C 4,66  2,52   5,40
-            C 8,28  16,17  27,10
-            C 38,3  46,8   50,7 Z
-            M 38,34
-            C 36,32 33,34 33,37
-            L 33,63
-            C 33,66 36,68 38,66
-            L 64,53
-            C 66,52 66,48 64,47
+            M 53,12
+            C 71,9  90,20 91,37
+            C 92,50 83,62 70,67
+            C 58,72 43,73 33,69
+            L 16,84
+            C 14,85 12,83 13,81
+            L 20,66
+            C 10,59 4,47  8,34
+            C 12,19 30,13 53,12
             Z" />
-    <!-- Orbiting dot (top-right) -->
+    <!-- Spark shifted left -->
     <path
-        android:fillColor="#E8735A"
-        android:fillAlpha="0.5"
-        android:pathData="M84,10m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.7"
+        android:pathData="M48,30m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <!-- Thought dot -->
+    <path
+        android:fillColor="#FF6B5B"
+        android:fillAlpha="0.4"
+        android:pathData="M80,6m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
 </vector>

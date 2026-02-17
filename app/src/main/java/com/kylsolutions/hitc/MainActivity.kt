@@ -916,7 +916,7 @@ class MainActivity : AppCompatActivity() {
         terminalOutput.text = spannableOutput
 
         appendOutput("\n\n")
-        appendColoredOutput("head in the cloud\n", colorCoral)
+        appendColoredOutput("head in the claude\n", colorCoral)
         appendColoredOutput("Your AI, everywhere.\n\n", colorPrimary)
     }
 

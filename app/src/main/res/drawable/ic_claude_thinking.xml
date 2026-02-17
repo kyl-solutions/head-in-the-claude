@@ -4,9 +4,9 @@
     android:height="18dp"
     android:viewportWidth="16"
     android:viewportHeight="16">
-    <!-- Claude AI — official starburst mark in lumo blue -->
+    <!-- Claude AI — thinking state (lighter/faded lumo blue) -->
     <path
-        android:fillColor="#5B8DEF"
+        android:fillColor="#8BB4F5"
         android:pathData="
             M3.127,10.604 L6.262,8.844 L6.315,8.691 L6.262,8.606
             L6.11,8.606 L5.585,8.574 L3.794,8.526 L2.24,8.461

@@ -4,25 +4,22 @@
     android:height="18dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
-    <!-- User chat badge — Khalipha hex + play cutout -->
+    <!-- User chat badge — HIT-C cloud bubble -->
     <path
-        android:fillColor="#E8735A"
-        android:fillType="evenOdd"
+        android:fillColor="#FF6B5B"
         android:pathData="
-            M 50,4
-            C 62,3  74,8  82,18
-            C 90,28 95,42 94,54
-            C 93,66 87,78 78,86
-            C 69,94 56,98 44,96
-            C 32,94 20,88 13,78
-            C 6,68  3,54  5,42
-            C 7,30  14,18 24,10
-            C 34,2  42,5  50,4 Z
-            M 38,32
-            C 36,30 33,32 33,35
-            L 33,65
-            C 33,68 36,70 38,68
-            L 66,53
-            C 68,52 68,48 66,47
+            M 55,10
+            C 72,8  88,18 90,35
+            C 92,48 84,60 72,66
+            C 60,72 44,72 34,68
+            L 18,82
+            C 16,83 14,81 15,79
+            L 22,65
+            C 12,58 6,46  10,33
+            C 14,18 32,12 55,10
             Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.85"
+        android:pathData="M62,28m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
 </vector>
