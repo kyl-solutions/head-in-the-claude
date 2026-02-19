@@ -32,7 +32,13 @@ class SessionRepository(private val db: ConversationDatabase) {
             model = model
         )
         conversationDao.insertConversation(conversation)
+        // Keep max 3 conversations — prune oldest after creating new one
+        pruneOldConversations(MAX_CONVERSATIONS)
         conversation
+    }
+
+    companion object {
+        const val MAX_CONVERSATIONS = 3
     }
 
     /**
@@ -82,14 +88,16 @@ class SessionRepository(private val db: ConversationDatabase) {
     suspend fun addUserMessage(
         conversationId: String,
         content: String,
-        imagePath: String? = null
+        imagePath: String? = null,
+        mediaType: String? = null
     ): Message = withContext(Dispatchers.IO) {
         val message = Message(
             conversationId = conversationId,
             role = "user",
             content = content,
             hasImage = imagePath != null,
-            imagePath = imagePath
+            imagePath = imagePath,
+            mediaType = mediaType
         )
         messageDao.insertMessage(message)
 
@@ -149,7 +157,7 @@ class SessionRepository(private val db: ConversationDatabase) {
                         imageBytes,
                         android.util.Base64.NO_WRAP
                     )
-                    ImageContent(base64 = base64, mediaType = "image/jpeg")
+                    ImageContent(base64 = base64, mediaType = msg.mediaType ?: "image/jpeg")
                 } else {
                     null
                 }
@@ -201,6 +209,17 @@ class SessionRepository(private val db: ConversationDatabase) {
      */
     suspend fun deleteAllConversations() = withContext(Dispatchers.IO) {
         conversationDao.deleteAllConversations()
+    }
+
+    /**
+     * Prune old conversations, keeping only the most recent N.
+     * Cascade delete removes all associated messages.
+     */
+    suspend fun pruneOldConversations(keepCount: Int = 3) = withContext(Dispatchers.IO) {
+        val idsToDelete = conversationDao.getConversationIdsToprune(keepCount)
+        if (idsToDelete.isNotEmpty()) {
+            conversationDao.deleteConversationsByIds(idsToDelete)
+        }
     }
 
     /**

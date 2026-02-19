@@ -32,4 +32,10 @@ interface ConversationDao {
 
     @Query("DELETE FROM conversations")
     suspend fun deleteAllConversations()
+
+    @Query("SELECT id FROM conversations ORDER BY updatedAt DESC LIMIT -1 OFFSET :keepCount")
+    suspend fun getConversationIdsToprune(keepCount: Int): List<String>
+
+    @Query("DELETE FROM conversations WHERE id IN (:ids)")
+    suspend fun deleteConversationsByIds(ids: List<String>)
 }

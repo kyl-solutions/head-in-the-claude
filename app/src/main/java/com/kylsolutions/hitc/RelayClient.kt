@@ -46,11 +46,15 @@ class RelayClient(
 
     /**
      * Send a text message to Claude via the relay. Returns a Flow of events.
-     * Optional workingDir overrides the relay's default WORKING_DIR for this message.
+     * Optional workingDir overrides the relay default WORKING_DIR for this message.
      */
-    fun sendMessage(sessionId: String?, message: String, workingDir: String? = null): Flow<RelayEvent> = callbackFlow {
-        val bodyMap = mutableMapOf<String, Any?>(
-            "sessionId" to sessionId,
+    fun sendMessage(
+        sessionId: String?,
+        message: String,
+        workingDir: String? = null
+    ): Flow<RelayEvent> = callbackFlow {
+        val bodyMap = mutableMapOf(
+            "sessionId" to (sessionId ?: ""),
             "message" to message
         )
         if (workingDir != null) bodyMap["workingDir"] = workingDir
@@ -250,45 +254,44 @@ class RelayClient(
         }
     }
 
-    /**
-     * Fetch the context command for a project (reads .claude/commands/*.md).
-     * Returns ProjectContext with the command name and full md content, or null.
-     */
-    suspend fun getProjectContext(projectName: String): ProjectContext? = withContext(Dispatchers.IO) {
-        try {
-            val request = Request.Builder()
-                .url("$baseUrl/api/projects/$projectName/context")
-                .header("Authorization", "Bearer $authToken")
-                .get()
-                .build()
-            val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: return@withContext null
-            val json = JsonParser.parseString(body).asJsonObject
-            if (json.get("found")?.asBoolean == true) {
-                ProjectContext(
-                    command = json.get("command")?.asString ?: "",
-                    content = json.get("content")?.asString ?: "",
-                    path = json.get("path")?.asString ?: ""
-                )
-            } else null
-        } catch (e: Exception) {
-            null
+    suspend fun getProjectContext(projectName: String): ProjectContext? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val req = Request.Builder()
+                    .url("$baseUrl/api/projects/$projectName/context")
+                    .header("Authorization", "Bearer $authToken")
+                    .get()
+                    .build()
+                val resp = client.newCall(req).execute()
+                val txt = resp.body?.string() ?: return@withContext null
+                val json = JsonParser.parseString(txt).asJsonObject
+                if (json.get("found")?.asBoolean == true) {
+                    ProjectContext(
+                        command = json.get("command")?.asString ?: "",
+                        content = json.get("content")?.asString ?: "",
+                        path = json.get("path")?.asString ?: ""
+                    )
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
         }
     }
 
-    /**
-     * Clear all relay sessions.
-     */
-    suspend fun clearAllSessions(): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val request = Request.Builder()
-                .url("$baseUrl/api/sessions")
-                .header("Authorization", "Bearer $authToken")
-                .delete()
-                .build()
-            client.newCall(request).execute().isSuccessful
-        } catch (e: Exception) {
-            false
+    suspend fun clearAllSessions(): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val req = Request.Builder()
+                    .url("$baseUrl/api/sessions")
+                    .header("Authorization", "Bearer $authToken")
+                    .delete()
+                    .build()
+                req.let { client.newCall(it).execute().isSuccessful }
+            } catch (e: Exception) {
+                false
+            }
         }
     }
 
@@ -341,19 +344,16 @@ sealed class RelayEvent {
 /**
  * A project folder discovered by the relay server.
  */
-/**
- * A project's context command content from .claude/commands/.
- */
-data class ProjectContext(
-    val command: String,
-    val content: String,
-    val path: String
-)
-
 data class ProjectInfo(
     val name: String,
     val path: String,
     val type: String,
     val lastCommitTimestamp: Long? = null,
     val lastCommitMessage: String? = null
+)
+
+data class ProjectContext(
+    val command: String,
+    val content: String,
+    val path: String
 )

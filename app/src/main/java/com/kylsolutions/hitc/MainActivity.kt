@@ -352,9 +352,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupScreenshotHelper() {
-        screenshotHelper = ScreenshotHelper(this) { file ->
-            handleScreenshot(file)
-        }
+        screenshotHelper = ScreenshotHelper(
+            activity = this,
+            onScreenshotCaptured = { file -> handleScreenshot(file) },
+            onFileAttached = { attachment -> handleAttachment(attachment) }
+        )
         screenshotHelper.initialize()
     }
 
@@ -474,9 +476,34 @@ class MainActivity : AppCompatActivity() {
         assistantResponseBuffer.clear()
         responseStartPos = -1
         terminalOutput.text = ""
-        appendColoredOutput("${conversation.title}\n", colorCoral)
-        appendColoredOutput("${conversation.messageCount} messages\n\n", colorPrimary)
         drawerLayout.closeDrawer(GravityCompat.START)
+
+        // Load and replay conversation history
+        lifecycleScope.launch {
+            try {
+                val messages = withContext(Dispatchers.IO) {
+                    sessionRepo.getMessageHistory(conversation.id)
+                }
+                if (messages.isEmpty()) {
+                    showWelcomeScreen()
+                } else {
+                    for (msg in messages) {
+                        if (msg.role == "user") {
+                            appendOutput("\n")
+                            appendInlineIcon(R.drawable.ic_user_badge)
+                            appendColoredOutput(" User: ", colorCoral)
+                            appendColoredOutput("${msg.textContent}\n\n", colorPrimary)
+                        } else {
+                            appendInlineIcon(R.drawable.ic_claude)
+                            appendOutput(" Claude: ")
+                            appendColoredOutput("${msg.textContent}\n\n", colorPrimary)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                appendColoredOutput("Failed to load history: ${e.message}\n", colorRed)
+            }
+        }
     }
 
     private fun onSessionLongPress(conversation: Conversation) {
@@ -497,7 +524,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadProjects() {
         val client = relayClient ?: run {
-            Log.w(TAG, "loadProjects: relayClient is null")
+            Log.w(TAG, "loadProjects: relayClient is null (Direct mode)")
+            runOnUiThread {
+                projectsEmptyText.text = "Connect relay for projects"
+                projectsEmptyText.visibility = View.VISIBLE
+                projectsList.visibility = View.GONE
+            }
             return
         }
         Log.i(TAG, "loadProjects: starting fetch")
@@ -778,15 +810,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun sendMessageWithImage(file: File, caption: String) {
+    private fun sendMessageWithImage(file: File, caption: String, mediaType: String = "image/jpeg") {
         setStreamingState(true)
         appendOutput("\n")
         appendInlineIcon(R.drawable.ic_user_badge)
-        appendColoredOutput(" [Image: ${file.name}] $caption\n\n", colorCoral)
+        val fileLabel = if (mediaType == "application/pdf") "PDF" else "Image"
+        appendColoredOutput(" [$fileLabel: ${file.name}] $caption\n\n", colorCoral)
         appendInlineIcon(R.drawable.ic_claude)
         appendOutput(" Claude: ")
         markResponseStart()
-        if (useRelay) sendImageViaRelay(file, caption) else sendImageViaDirect(file, caption)
+        if (useRelay) sendImageViaRelay(file, caption) else sendImageViaDirect(file, caption, mediaType)
     }
 
     private fun sendImageViaRelay(file: File, caption: String) {
@@ -813,16 +846,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun sendImageViaDirect(file: File, caption: String) {
+    private fun sendImageViaDirect(file: File, caption: String, mediaType: String = "image/jpeg") {
         val client = claudeClient ?: return
         val conversationId = currentConversationId ?: return
         activeJob = lifecycleScope.launch {
             try {
-                sessionRepo.addUserMessage(conversationId, caption, file.absolutePath)
+                sessionRepo.addUserMessage(conversationId, caption, file.absolutePath, mediaType)
                 val history = sessionRepo.getMessageHistory(conversationId)
                 val imageBase64 = android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
                 assistantResponseBuffer.clear()
-                client.sendMessageWithImage(history, imageBase64, "image/jpeg", caption)
+                client.sendMessageWithImage(history, imageBase64, mediaType, caption)
                     .flowOn(Dispatchers.IO)
                     .onCompletion {
                         if (assistantResponseBuffer.isNotEmpty()) {
@@ -899,8 +932,13 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 if (!useRelay) {
-                    val newConversation = sessionRepo.createConversation()
-                    currentConversationId = newConversation.id
+                    // Reuse current conversation if it's empty (no ghost entries)
+                    val currentId = currentConversationId
+                    val currentCount = if (currentId != null) sessionRepo.getMessageCount(currentId) else -1
+                    if (currentCount > 0 || currentId == null) {
+                        val newConversation = sessionRepo.createConversation()
+                        currentConversationId = newConversation.id
+                    }
                 }
                 spannableOutput.clear()
                 assistantResponseBuffer.clear()
@@ -924,6 +962,23 @@ class MainActivity : AppCompatActivity() {
         }
         Toast.makeText(this, getString(R.string.screenshot_sent), Toast.LENGTH_SHORT).show()
         sendMessageWithImage(file, "What do you see in this screenshot? Describe it and suggest any relevant actions.")
+    }
+
+    private fun handleAttachment(attachment: AttachmentResult) {
+        if (relayClient == null && claudeClient == null) {
+            Toast.makeText(this, "No connection — file saved locally", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val prompt = when {
+            attachment.mediaType == "application/pdf" ->
+                "I've attached a PDF document. Please read and summarize its contents."
+            attachment.mediaType.startsWith("image/") ->
+                "What do you see in this image? Describe it and suggest any relevant actions."
+            else ->
+                "I've attached a file. Please analyze its contents."
+        }
+        Toast.makeText(this, "Sending ${attachment.file.name}...", Toast.LENGTH_SHORT).show()
+        sendMessageWithImage(attachment.file, prompt, attachment.mediaType)
     }
 
     // ─── Output Engine ──────────────────────────────────────────

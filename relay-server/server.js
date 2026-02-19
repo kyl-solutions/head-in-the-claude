@@ -206,6 +206,13 @@ app.get('/api/projects', authMiddleware, async (c) => {
       }
 
       if (type) {
+        // Get filesystem modification time (captures any file change)
+        let lastModified = 0;
+        try {
+          const stat = await fs.stat(dirPath);
+          lastModified = Math.floor(stat.mtimeMs / 1000);
+        } catch { /* stat failed */ }
+
         let lastCommit = null;
         // Read latest git commit info if .git exists
         try {
@@ -215,16 +222,12 @@ app.get('/api/projects', authMiddleware, async (c) => {
           if (!isNaN(ts)) lastCommit = { timestamp: ts, message: msg };
         } catch { /* no git history or not a git repo */ }
 
-        projects.push({ name: entry.name, path: dirPath, type, lastCommit });
+        projects.push({ name: entry.name, path: dirPath, type, lastModified, lastCommit });
       }
     }
 
-    // Sort by most recent commit first; projects without commits go last
-    projects.sort((a, b) => {
-      const ta = a.lastCommit?.timestamp ?? 0;
-      const tb = b.lastCommit?.timestamp ?? 0;
-      return tb - ta;
-    });
+    // Sort by filesystem modification time (most recently modified first)
+    projects.sort((a, b) => b.lastModified - a.lastModified);
     return c.json({ projects });
   } catch (e) {
     return c.json({ error: e.message, projects: [] }, 500);

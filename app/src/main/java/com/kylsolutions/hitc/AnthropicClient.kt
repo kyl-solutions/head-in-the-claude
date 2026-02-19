@@ -187,16 +187,29 @@ class AnthropicClient(
                 content.add(mapOf("type" to "text", "text" to it))
             }
 
-            // Add image content if present
+            // Add image or document content if present
             msg.imageContent?.let { img ->
-                content.add(mapOf(
-                    "type" to "image",
-                    "source" to mapOf(
-                        "type" to "base64",
-                        "media_type" to img.mediaType,
-                        "data" to img.base64
-                    )
-                ))
+                if (img.mediaType == "application/pdf") {
+                    // PDFs use the "document" content block type
+                    content.add(mapOf(
+                        "type" to "document",
+                        "source" to mapOf(
+                            "type" to "base64",
+                            "media_type" to img.mediaType,
+                            "data" to img.base64
+                        )
+                    ))
+                } else {
+                    // Images use the "image" content block type
+                    content.add(mapOf(
+                        "type" to "image",
+                        "source" to mapOf(
+                            "type" to "base64",
+                            "media_type" to img.mediaType,
+                            "data" to img.base64
+                        )
+                    ))
+                }
             }
 
             mapOf(

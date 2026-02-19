@@ -29,5 +29,6 @@ data class Message(
     val content: String,
     val createdAt: Long = System.currentTimeMillis(),
     val hasImage: Boolean = false,
-    val imagePath: String? = null
+    val imagePath: String? = null,
+    val mediaType: String? = null // e.g. "image/jpeg", "application/pdf"
 )
