@@ -35,6 +35,8 @@ import com.kylsolutions.hitc.repository.SessionRepository
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
@@ -96,7 +98,9 @@ class MainActivity : AppCompatActivity() {
 
     // Shared
     private var activeJob: Job? = null
+    private var heartbeatJob: Job? = null
     private var isStreaming = false
+    private var relayReachable = false  // live connectivity state
     private val spannableOutput = SpannableStringBuilder()
     private val assistantResponseBuffer = StringBuilder()
     private lateinit var screenshotHelper: ScreenshotHelper
@@ -177,6 +181,83 @@ class MainActivity : AppCompatActivity() {
         setupScreenshotHelper()
         setupListeners()
         connectToRelay()
+    }
+
+    // ─── Lifecycle ────────────────────────────────────────────────
+
+    override fun onResume() {
+        super.onResume()
+        // Re-check relay connectivity when app comes back from background
+        if (useRelay) {
+            lifecycleScope.launch {
+                val ok = try { relayClient?.healthCheck() ?: false } catch (_: Exception) { false }
+                relayReachable = ok
+                runOnUiThread { showBadge(relay = true, reachable = ok) }
+                if (!ok) {
+                    // Try to reconnect silently
+                    try {
+                        val client = RelayClient(relaySessionMgr.relayUrl, relaySessionMgr.authToken)
+                        if (client.healthCheck()) {
+                            relayClient = client
+                            relayReachable = true
+                            runOnUiThread { showBadge(relay = true, reachable = true) }
+                            Log.i(TAG, "Relay reconnected on resume")
+                        }
+                    } catch (_: Exception) { /* stay disconnected, heartbeat will retry */ }
+                }
+            }
+        }
+        startHeartbeat()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopHeartbeat()
+    }
+
+    // ─── Heartbeat ──────────────────────────────────────────────
+
+    private fun startHeartbeat() {
+        stopHeartbeat()
+        heartbeatJob = lifecycleScope.launch {
+            while (isActive) {
+                delay(15_000) // 15 seconds
+                if (!useRelay) continue
+                val wasReachable = relayReachable
+                val ok = try { relayClient?.healthCheck() ?: false } catch (_: Exception) { false }
+                relayReachable = ok
+
+                if (ok != wasReachable) {
+                    Log.i(TAG, "Relay connectivity changed: ${if (ok) "CONNECTED" else "DISCONNECTED"}")
+                    runOnUiThread { showBadge(relay = true, reachable = ok) }
+                    if (ok && !wasReachable) {
+                        // Came back online — refresh projects silently
+                        runOnUiThread { loadProjects() }
+                    }
+                }
+
+                // If unreachable, try to rebuild the client (Tailscale may have changed IP)
+                if (!ok) {
+                    try {
+                        val client = RelayClient(relaySessionMgr.relayUrl, relaySessionMgr.authToken)
+                        if (client.healthCheck()) {
+                            relayClient = client
+                            relayReachable = true
+                            runOnUiThread {
+                                showBadge(relay = true, reachable = true)
+                                loadProjects()
+                            }
+                            Log.i(TAG, "Relay auto-reconnected via heartbeat")
+                        }
+                    } catch (_: Exception) { /* will retry next cycle */ }
+                }
+            }
+        }
+    }
+
+    private fun stopHeartbeat() {
+        heartbeatJob?.cancel()
+        heartbeatJob = null
     }
 
     // ─── Init ────────────────────────────────────────────────────
@@ -616,7 +697,8 @@ class MainActivity : AppCompatActivity() {
                     if (client.healthCheck()) {
                         relayClient = client
                         useRelay = true
-                        showBadge(relay = true)
+                        relayReachable = true
+                        showBadge(relay = true, reachable = true)
                         appendColoredOutput("Switched to RELAY mode (full tool access)\n\n", colorGreen)
                         loadProjects()
                     } else {
@@ -641,8 +723,9 @@ class MainActivity : AppCompatActivity() {
                 if (healthy) {
                     relayClient = client
                     useRelay = true
+                    relayReachable = true
                     Log.i(TAG, "Relay connection successful")
-                    showBadge(relay = true)
+                    showBadge(relay = true, reachable = true)
                     loadProjects()
                 } else {
                     fallbackToDirect("Relay not reachable")
@@ -663,14 +746,20 @@ class MainActivity : AppCompatActivity() {
     private fun fallbackToDirect(reason: String) {
         Log.w(TAG, "Falling back to direct API mode: $reason")
         useRelay = false
+        relayReachable = false
         showBadge(relay = false)
     }
 
-    private fun showBadge(relay: Boolean) {
+    private fun showBadge(relay: Boolean, reachable: Boolean = true) {
         connectionBadge.visibility = View.VISIBLE
         if (relay) {
-            connectionBadge.text = "✕ ${getString(R.string.badge_relay)}"
-            connectionBadge.setTextColor(ContextCompat.getColor(this, R.color.badge_relay))
+            if (reachable) {
+                connectionBadge.text = "● ${getString(R.string.badge_relay)}"
+                connectionBadge.setTextColor(ContextCompat.getColor(this, R.color.success_green))
+            } else {
+                connectionBadge.text = "✕ ${getString(R.string.badge_relay)}"
+                connectionBadge.setTextColor(ContextCompat.getColor(this, R.color.error_red))
+            }
             connectionBadge.setBackgroundResource(R.drawable.bg_connection_badge)
         } else {
             connectionBadge.text = "◆ ${getString(R.string.badge_direct)}"
@@ -723,7 +812,7 @@ class MainActivity : AppCompatActivity() {
         if (useRelay) sendViaRelay(prompt) else sendViaDirect(prompt)
     }
 
-    private fun sendViaRelay(message: String) {
+    private fun sendViaRelay(message: String, isRetry: Boolean = false) {
         val client = relayClient ?: run {
             appendColoredOutput("Relay client not initialized\n", colorRed)
             setStreamingState(false)
@@ -735,17 +824,53 @@ class MainActivity : AppCompatActivity() {
                 .onCompletion { finalizeResponse(); setStreamingState(false) }
                 .catch { e ->
                     val msg = e.message ?: ""
-                    if (msg.contains("No conversation found") || msg.contains("exited with code")) {
-                        relaySessionMgr.currentSessionId = null
-                        appendColoredOutput("\nSession expired, retrying...\n", colorGreen)
-                        setStreamingState(false)
-                        sendMessageDirect(message, null)
-                    } else {
-                        appendColoredOutput("\nError: $msg\n", colorRed); setStreamingState(false)
+                    when {
+                        msg.contains("No conversation found") || msg.contains("exited with code") -> {
+                            relaySessionMgr.currentSessionId = null
+                            appendColoredOutput("\nSession expired, retrying...\n", colorGreen)
+                            setStreamingState(false)
+                            sendMessageDirect(message, null)
+                        }
+                        !isRetry && (msg.contains("Connection") || msg.contains("timed out") || msg.contains("unreachable")) -> {
+                            // Network failure — try reconnecting once
+                            appendColoredOutput("\nRelay connection lost, reconnecting...\n", colorCoral)
+                            relayReachable = false
+                            runOnUiThread { showBadge(relay = true, reachable = false) }
+                            val reconnected = tryReconnectRelay()
+                            if (reconnected) {
+                                appendColoredOutput("Reconnected! Retrying...\n", colorGreen)
+                                setStreamingState(false)
+                                sendViaRelay(message, isRetry = true)
+                            } else {
+                                appendColoredOutput("Relay unreachable. Switching to direct mode.\n", colorRed)
+                                useRelay = false
+                                runOnUiThread { showBadge(relay = false) }
+                                setStreamingState(false)
+                                sendViaDirect(message)
+                            }
+                        }
+                        else -> {
+                            appendColoredOutput("\nError: $msg\n", colorRed); setStreamingState(false)
+                        }
                     }
                 }
                 .collect { event -> handleRelayEvent(event) }
         }
+    }
+
+    /**
+     * Attempt to rebuild the relay client and check health. Returns true if successful.
+     */
+    private suspend fun tryReconnectRelay(): Boolean {
+        return try {
+            val client = RelayClient(relaySessionMgr.relayUrl, relaySessionMgr.authToken)
+            if (client.healthCheck()) {
+                relayClient = client
+                relayReachable = true
+                runOnUiThread { showBadge(relay = true, reachable = true) }
+                true
+            } else false
+        } catch (_: Exception) { false }
     }
 
     /**
@@ -822,24 +947,42 @@ class MainActivity : AppCompatActivity() {
         if (useRelay) sendImageViaRelay(file, caption) else sendImageViaDirect(file, caption, mediaType)
     }
 
-    private fun sendImageViaRelay(file: File, caption: String) {
+    private fun sendImageViaRelay(file: File, caption: String, isRetry: Boolean = false) {
         val client = relayClient ?: return
         activeJob = lifecycleScope.launch {
-            // Clear stale session to avoid "No conversation found" errors
             val sessionId = relaySessionMgr.currentSessionId
             client.sendMessageWithImage(sessionId, caption, file)
                 .flowOn(Dispatchers.IO)
                 .onCompletion { finalizeResponse(); setStreamingState(false) }
                 .catch { e ->
                     val msg = e.message ?: ""
-                    if (msg.contains("No conversation found") || msg.contains("exited with code")) {
-                        // Session expired — clear and retry with new session
-                        relaySessionMgr.currentSessionId = null
-                        appendColoredOutput("\nSession expired, retrying...\n", colorGreen)
-                        setStreamingState(false)
-                        sendMessageWithImage(file, caption)
-                    } else {
-                        appendColoredOutput("\nError: $msg\n", colorRed); setStreamingState(false)
+                    when {
+                        msg.contains("No conversation found") || msg.contains("exited with code") -> {
+                            relaySessionMgr.currentSessionId = null
+                            appendColoredOutput("\nSession expired, retrying...\n", colorGreen)
+                            setStreamingState(false)
+                            sendMessageWithImage(file, caption)
+                        }
+                        !isRetry && (msg.contains("Connection") || msg.contains("timed out") || msg.contains("unreachable")) -> {
+                            appendColoredOutput("\nRelay connection lost, reconnecting...\n", colorCoral)
+                            relayReachable = false
+                            runOnUiThread { showBadge(relay = true, reachable = false) }
+                            val reconnected = tryReconnectRelay()
+                            if (reconnected) {
+                                appendColoredOutput("Reconnected! Retrying...\n", colorGreen)
+                                setStreamingState(false)
+                                sendImageViaRelay(file, caption, isRetry = true)
+                            } else {
+                                appendColoredOutput("Relay unreachable. Switching to direct mode.\n", colorRed)
+                                useRelay = false
+                                runOnUiThread { showBadge(relay = false) }
+                                setStreamingState(false)
+                                sendImageViaDirect(file, caption)
+                            }
+                        }
+                        else -> {
+                            appendColoredOutput("\nError: $msg\n", colorRed); setStreamingState(false)
+                        }
                     }
                 }
                 .collect { event -> handleRelayEvent(event) }
