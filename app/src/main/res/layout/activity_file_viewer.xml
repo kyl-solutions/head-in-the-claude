@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_main">
+
+    <!-- Toolbar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp"
+        android:background="@color/bg_header">
+
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            android:padding="4dp" />
+
+        <TextView
+            android:id="@+id/fileNameTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:textColor="@color/signal_green"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/jetbrains_mono"
+            android:singleLine="true"
+            android:ellipsize="middle" />
+
+        <ImageButton
+            android:id="@+id/askClaudeButton"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_chat"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/ask_claude"
+            android:padding="4dp" />
+    </LinearLayout>
+
+    <!-- File path subtitle -->
+    <TextView
+        android:id="@+id/filePathSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:background="@color/bg_surface"
+        android:textColor="@color/text_dim"
+        android:textSize="10sp"
+        android:fontFamily="@font/jetbrains_mono"
+        android:singleLine="true"
+        android:ellipsize="start" />
+
+    <!-- File content with line numbers -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- Line numbers -->
+                <TextView
+                    android:id="@+id/lineNumbers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:textColor="@color/text_dim"
+                    android:textSize="11sp"
+                    android:fontFamily="@font/jetbrains_mono"
+                    android:lineSpacingExtra="3dp"
+                    android:gravity="end"
+                    android:background="@color/bg_surface" />
+
+                <!-- File content -->
+                <TextView
+                    android:id="@+id/fileContent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    android:fontFamily="@font/jetbrains_mono"
+                    android:lineSpacingExtra="3dp"
+                    android:textIsSelectable="true" />
+            </LinearLayout>
+        </ScrollView>
+    </HorizontalScrollView>
+</LinearLayout>

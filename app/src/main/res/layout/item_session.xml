@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
-            android:fontFamily="@font/metropolis"
+            android:fontFamily="@font/jetbrains_mono"
             android:singleLine="true"
             android:ellipsize="end" />
 
@@ -39,15 +39,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:layout_marginTop="2dp">
 
             <TextView
-                android:id="@+id/sessionTimestamp"
+                android:id="@+id/sessionModel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_dim"
-                android:textSize="11sp"
-                android:fontFamily="@font/metropolis" />
+                android:textColor="@color/tool_name"
+                android:textSize="10sp"
+                android:fontFamily="@font/jetbrains_mono" />
 
             <TextView
                 android:id="@+id/sessionMessageCount"
@@ -55,8 +56,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:textColor="@color/text_dim"
-                android:textSize="11sp"
-                android:fontFamily="@font/metropolis" />
+                android:textSize="10sp"
+                android:fontFamily="@font/jetbrains_mono" />
+
+            <TextView
+                android:id="@+id/sessionTimestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="@color/text_dim"
+                android:textSize="10sp"
+                android:fontFamily="@font/jetbrains_mono" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

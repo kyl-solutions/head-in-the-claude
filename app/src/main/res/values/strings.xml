@@ -1,71 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">hit(C)</string>
-    <string name="app_name_full">Head-In-The-Claude</string>
-    <string name="connect_to_imac">Connect to iMac</string>
-    <string name="connect_to_claude">Connect to Claude</string>
+    <string name="app_name">KYLIDESCOPE</string>
+    <string name="app_name_full">KYLIDESCOPE Mobile</string>
     <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
     <string name="new_session">New Session</string>
     <string name="command_hint">Ask Claude…</string>
     <string name="send">Send</string>
+    <string name="stop_generation">Stop</string>
     <string name="capture_screenshot">Capture Screenshot</string>
     <string name="screenshot_saved">Screenshot saved: %1$s</string>
     <string name="screenshot_sent">Screenshot sent to conversation</string>
 
-    <!-- Connection badge -->
+    <!-- Connection -->
     <string name="badge_relay">relay</string>
-    <string name="badge_direct">direct</string>
+    <string name="connection_status">Connection Status</string>
 
-    <!-- Shortcut labels + prompts -->
-    <string name="shortcut_ls">ls</string>
-    <string name="shortcut_git">git status</string>
-    <string name="shortcut_read">read file</string>
-    <string name="shortcut_test">run tests</string>
-    <string name="shortcut_explain">explain</string>
-    <string name="shortcut_fix">fix</string>
-    <string name="shortcut_refactor">refactor</string>
-    <string name="shortcut_summarize">summarize</string>
+    <!-- Chat -->
+    <string name="thinking">Thinking…</string>
+    <string name="tool_reading_file">Reading file…</string>
+    <string name="tool_searching_code">Searching code…</string>
+    <string name="tool_fetching_page">Fetching page…</string>
+    <string name="tool_listing_dir">Listing directory…</string>
+    <string name="show_result">Show result</string>
+    <string name="hide_result">Hide result</string>
 
-    <!-- Drawer sections -->
-    <string name="drawer_projects">PROJECTS</string>
-    <string name="drawer_sessions">SESSIONS</string>
-    <string name="drawer_shortcuts">SHORTCUTS</string>
-    <string name="drawer_settings">SETTINGS</string>
-    <string name="drawer_projects_empty">Connect to relay to browse projects</string>
-    <string name="drawer_sessions_empty">No conversations yet</string>
-    <string name="drawer_new_session">New Session</string>
-    <string name="drawer_clear_sessions">Clear All Sessions</string>
-    <string name="drawer_refresh_projects">Refresh Projects</string>
-    <string name="drawer_clear_sessions_confirm">Delete all conversations? This cannot be undone.</string>
-    <string name="stop_generation">Stop</string>
+    <!-- Navigation -->
+    <string name="nav_chat">Chat</string>
+    <string name="nav_files">Files</string>
+    <string name="nav_sessions">Sessions</string>
+
+    <!-- Files -->
+    <string name="files_title">Mac Files</string>
+    <string name="files_empty">No files found</string>
+    <string name="path_copied">Copied @%1$s</string>
+    <string name="ask_claude">Ask Claude</string>
+
+    <!-- Sessions -->
+    <string name="sessions_title">Sessions</string>
+    <string name="sessions_empty">No conversations yet</string>
+    <string name="clear_all_sessions">Clear All Sessions</string>
+    <string name="clear_sessions_confirm">Delete all conversations? This cannot be undone.</string>
+    <string name="session_deleted">Session deleted</string>
 
     <!-- Settings -->
-    <string name="settings_model">Model</string>
     <string name="settings_relay_url">Relay URL</string>
-    <string name="settings_api_key">API Key</string>
-    <string name="settings_api_key_set">••••••••</string>
-    <string name="settings_api_key_change">Change</string>
-    <string name="settings_about">About hit(C)</string>
-    <string name="settings_version">v0.3.0</string>
+    <string name="settings_about">About KYLIDESCOPE Mobile</string>
+    <string name="settings_version">v1.0.0</string>
 
-    <!-- Translation -->
-    <string name="translate_title">Translate</string>
-    <string name="translate_hint_source">Enter text to translate…</string>
-    <string name="translate_hint_output">Translation will appear here…</string>
-    <string name="action_translate">Translate</string>
-    <string name="action_copy">Copy</string>
-    <string name="action_paste">Paste</string>
-    <string name="action_clear">Clear</string>
+    <!-- Clipboard -->
     <string name="copied_to_clipboard">Copied to clipboard</string>
-    <string name="pasted_from_clipboard">Pasted from clipboard</string>
-    <string name="clipboard_empty">Clipboard is empty</string>
-    <string name="translating">Translating…</string>
-    <string name="translation_complete">Done</string>
-    <string name="translation_error">Translation failed</string>
-
-    <!-- Languages -->
-    <string name="lang_english">English</string>
-    <string name="lang_zulu">isiZulu</string>
-    <string name="lang_sesotho">Sesotho</string>
-    <string name="select_language">Select Language</string>
 </resources>

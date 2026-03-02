@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kylsolutions.hitc"
+    namespace = "com.kylsolutions.kylidescope"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.kylsolutions.hitc"
+        applicationId = "com.kylsolutions.kylidescope"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
