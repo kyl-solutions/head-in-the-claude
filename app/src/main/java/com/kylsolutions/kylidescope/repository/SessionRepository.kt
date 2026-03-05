@@ -25,7 +25,7 @@ class SessionRepository(private val db: ConversationDatabase) {
      */
     suspend fun createConversation(
         title: String = "New Conversation",
-        model: String = "claude-sonnet-4-5-20250929"
+        model: String = "claude-sonnet-4-6"
     ): Conversation = withContext(Dispatchers.IO) {
         val conversation = Conversation(
             title = title,

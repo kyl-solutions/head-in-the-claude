@@ -12,5 +12,5 @@ data class Conversation(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val messageCount: Int = 0,
-    val model: String = "claude-sonnet-4-5-20250929"
+    val model: String = "claude-sonnet-4-6"
 )

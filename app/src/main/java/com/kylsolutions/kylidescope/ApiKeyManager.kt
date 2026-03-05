@@ -71,11 +71,11 @@ class ApiKeyManager(context: Context) {
     }
 
     /**
-     * Get the selected model (defaults to Sonnet 4.5).
+     * Get the selected model (defaults to Sonnet 4.6).
      */
     fun getModel(): String {
-        return encryptedPrefs.getString(KEY_MODEL, "claude-sonnet-4-5-20250929")
-            ?: "claude-sonnet-4-5-20250929"
+        return encryptedPrefs.getString(KEY_MODEL, "claude-sonnet-4-6")
+            ?: "claude-sonnet-4-6"
     }
 
     /**
